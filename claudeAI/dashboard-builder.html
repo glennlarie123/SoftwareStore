@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WebCraft – Visual App Builder</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1117;
+  --surface:#181c27;
+  --card:#1e2336;
+  --border:#2a3050;
+  --border2:#374060;
+  --accent:#6366f1;
+  --accent2:#818cf8;
+  --text:#e2e8f0;
+  --muted:#8892a4;
+  --dim:#4a5568;
+  --danger:#ef4444;
+  --success:#22c55e;
+  --warn:#f59e0b;
+  --radius:8px;
+  --sidebar:260px;
+  --toolbar:52px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;}
+
+/* ── TOOLBAR ── */
+#toolbar{
+  height:var(--toolbar);display:flex;align-items:center;gap:8px;
+  padding:0 16px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:fixed;top:0;left:0;right:0;z-index:200;
+}
+#toolbar .brand{font-weight:700;font-size:16px;letter-spacing:-0.4px;color:#fff;margin-right:12px;}
+#toolbar .brand span{color:var(--accent2);}
+.tb-btn{
+  display:flex;align-items:center;gap:6px;padding:6px 12px;
+  border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:13px;font-family:inherit;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.tb-btn:hover{background:var(--card);color:var(--text);border-color:var(--border2);}
+.tb-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.tb-btn i{font-size:15px;}
+.tb-sep{width:1px;height:24px;background:var(--border);margin:0 4px;}
+#undo-btn,#redo-btn{padding:6px 10px;}
+#preview-btn{background:var(--accent);color:#fff;border-color:var(--accent);}
+#preview-btn:hover{background:#4f51d4;}
+#export-btn{background:#22c55e22;color:var(--success);border-color:#22c55e55;}
+#export-btn:hover{background:#22c55e33;}
+#clear-btn{background:#ef444422;color:var(--danger);border-color:#ef444455;}
+#clear-btn:hover{background:#ef444433;}
+.spacer{flex:1;}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:var(--sidebar);position:fixed;top:var(--toolbar);bottom:0;left:0;
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100;overflow:hidden;
+}
+.sidebar-header{
+  padding:12px 14px 8px;font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.8px;color:var(--dim);
+}
+.comp-search{
+  margin:0 10px 8px;padding:7px 10px;background:var(--card);
+  border:1px solid var(--border);border-radius:6px;color:var(--text);
+  font-size:13px;font-family:inherit;outline:none;width:calc(100% - 20px);
+}
+.comp-search::placeholder{color:var(--dim);}
+.comp-search:focus{border-color:var(--accent);}
+#component-list{flex:1;overflow-y:auto;padding:0 8px 12px;}
+#component-list::-webkit-scrollbar{width:4px;}
+#component-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+.comp-group{margin-bottom:12px;}
+.comp-group-label{font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.7px;padding:6px 6px 4px;}
+.comp-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;
+  border-radius:6px;cursor:grab;border:1px solid transparent;
+  margin-bottom:3px;transition:all .12s;user-select:none;font-size:13px;
+}
+.comp-item:hover{background:var(--card);border-color:var(--border);}
+.comp-item:active{cursor:grabbing;opacity:.7;}
+.comp-item i{font-size:17px;width:20px;text-align:center;color:var(--accent2);}
+.comp-item .comp-name{color:var(--text);}
+.comp-item .comp-desc{font-size:11px;color:var(--muted);}
+
+/* Sidebar props panel */
+#props-panel{
+  border-top:1px solid var(--border);padding:12px;
+  max-height:320px;overflow-y:auto;background:var(--surface);
+}
+#props-panel::-webkit-scrollbar{width:4px;}
+#props-panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+.props-title{font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.prop-row{margin-bottom:10px;}
+.prop-label{font-size:11px;color:var(--muted);margin-bottom:4px;display:block;}
+.prop-input{
+  width:100%;padding:6px 8px;background:var(--card);border:1px solid var(--border);
+  border-radius:5px;color:var(--text);font-size:12px;font-family:inherit;outline:none;
+}
+.prop-input:focus{border-color:var(--accent);}
+.prop-input[type=color]{height:30px;padding:2px 4px;cursor:pointer;}
+.prop-btn{
+  width:100%;padding:7px;background:var(--accent);color:#fff;
+  border:none;border-radius:6px;font-size:12px;font-family:inherit;
+  cursor:pointer;transition:background .15s;margin-top:4px;
+}
+.prop-btn:hover{background:#4f51d4;}
+.prop-btn.danger{background:var(--danger);}
+.prop-btn.danger:hover{background:#dc2626;}
+.prop-btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.prop-btn.ghost:hover{background:var(--card);color:var(--text);}
+#no-sel{font-size:12px;color:var(--dim);text-align:center;padding:16px 0;}
+
+/* ── CANVAS ── */
+#canvas-wrap{
+  position:fixed;top:var(--toolbar);left:var(--sidebar);right:0;bottom:0;
+  overflow:auto;background:repeating-linear-gradient(0deg,transparent,transparent 31px,var(--border) 31px,var(--border) 32px),
+  repeating-linear-gradient(90deg,transparent,transparent 31px,var(--border) 31px,var(--border) 32px);
+  background-color:var(--bg);
+}
+#canvas{
+  min-width:900px;min-height:700px;width:100%;height:100%;
+  position:relative;
+}
+.canvas-drop-hint{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;color:var(--dim);pointer-events:none;
+}
+.canvas-drop-hint i{font-size:56px;display:block;margin-bottom:12px;color:var(--border2);}
+.canvas-drop-hint p{font-size:14px;}
+.canvas-drop-hint small{font-size:12px;color:var(--dim);opacity:.6;}
+
+/* ── CANVAS ELEMENTS ── */
+.canvas-el{
+  position:absolute;cursor:move;user-select:none;
+  border:2px solid transparent;border-radius:var(--radius);
+  transition:border-color .12s;
+  min-width:80px;min-height:30px;
+}
+.canvas-el:hover{border-color:var(--border2);}
+.canvas-el.selected{border-color:var(--accent)!important;z-index:50;}
+.resize-handle{
+  position:absolute;bottom:-5px;right:-5px;width:12px;height:12px;
+  background:var(--accent);border-radius:3px;cursor:se-resize;z-index:10;
+  display:none;
+}
+.canvas-el.selected .resize-handle{display:block;}
+.el-toolbar{
+  position:absolute;top:-34px;left:0;display:none;
+  background:var(--card);border:1px solid var(--border);border-radius:6px;
+  padding:3px 4px;gap:2px;z-index:100;white-space:nowrap;
+}
+.canvas-el.selected .el-toolbar{display:flex;}
+.el-tb-btn{
+  padding:4px 7px;border:none;background:transparent;color:var(--muted);
+  border-radius:4px;cursor:pointer;font-size:12px;transition:all .1s;
+}
+.el-tb-btn:hover{background:var(--border);color:var(--text);}
+.el-tb-btn.danger:hover{background:#ef444433;color:var(--danger);}
+
+/* drop indicator */
+#drop-indicator{
+  position:absolute;width:3px;background:var(--accent);border-radius:2px;
+  pointer-events:none;display:none;z-index:300;
+  box-shadow:0 0 8px var(--accent);
+}
+
+/* ── BUILT-IN ELEMENT STYLES ── */
+.el-container{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px;min-height:80px;
+}
+.el-text{color:var(--text);font-size:14px;line-height:1.6;padding:4px;}
+.el-heading{color:#fff;font-weight:700;font-size:24px;padding:4px;}
+.el-btn-primary{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:9px 20px;background:var(--accent);color:#fff;border:none;
+  border-radius:6px;font-size:14px;font-family:inherit;cursor:pointer;
+  font-weight:500;gap:6px;
+}
+.el-btn-primary:hover{background:#4f51d4;}
+.el-btn-secondary{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:9px 20px;background:transparent;color:var(--text);
+  border:1px solid var(--border2);border-radius:6px;font-size:14px;
+  font-family:inherit;cursor:pointer;font-weight:500;gap:6px;
+}
+.el-btn-secondary:hover{background:var(--card);}
+.el-btn-danger{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:9px 20px;background:var(--danger);color:#fff;border:none;
+  border-radius:6px;font-size:14px;font-family:inherit;cursor:pointer;font-weight:500;
+}
+.el-input{
+  width:100%;padding:8px 12px;background:var(--card);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);font-size:14px;font-family:inherit;outline:none;
+}
+.el-input:focus{border-color:var(--accent);}
+.el-badge{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:12px;font-weight:500;
+}
+.el-badge.badge-success{background:#22c55e22;color:var(--success);}
+.el-badge.badge-warn{background:#f59e0b22;color:var(--warn);}
+.el-badge.badge-danger{background:#ef444422;color:var(--danger);}
+.el-badge.badge-accent{background:#6366f122;color:var(--accent2);}
+.el-progress{width:100%;}
+.el-progress .bar-track{background:var(--border);border-radius:4px;height:8px;overflow:hidden;}
+.el-progress .bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .4s;}
+.el-progress .bar-label{font-size:12px;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between;}
+.el-divider{border:none;border-top:1px solid var(--border);width:100%;margin:8px 0;}
+.el-alert{padding:10px 14px;border-radius:6px;font-size:13px;}
+.el-alert.alert-info{background:#6366f122;border-left:3px solid var(--accent);color:var(--accent2);}
+.el-alert.alert-success{background:#22c55e22;border-left:3px solid var(--success);color:var(--success);}
+.el-alert.alert-warn{background:#f59e0b22;border-left:3px solid var(--warn);color:var(--warn);}
+.el-alert.alert-danger{background:#ef444422;border-left:3px solid var(--danger);color:var(--danger);}
+.el-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;
+}
+.el-card .card-title{font-size:15px;font-weight:600;color:#fff;margin-bottom:6px;}
+.el-card .card-body{font-size:13px;color:var(--muted);line-height:1.6;}
+.el-stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:16px;text-align:center;
+}
+.el-stat-card .stat-value{font-size:32px;font-weight:700;color:#fff;}
+.el-stat-card .stat-label{font-size:12px;color:var(--muted);margin-top:4px;}
+.el-stat-card .stat-trend{font-size:12px;margin-top:4px;}
+.el-stat-card .stat-trend.up{color:var(--success);}
+.el-stat-card .stat-trend.down{color:var(--danger);}
+.el-image img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;}
+.el-image{background:var(--card);border:1px dashed var(--border2);border-radius:6px;overflow:hidden;min-width:120px;min-height:80px;}
+/* Table */
+.el-table-wrap{overflow-x:auto;}
+.el-table{width:100%;border-collapse:collapse;font-size:13px;}
+.el-table thead th{
+  background:var(--bg);color:var(--muted);font-weight:600;
+  padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);
+  font-size:11px;text-transform:uppercase;letter-spacing:.5px;
+}
+.el-table tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+.el-table tbody tr:hover{background:var(--card);}
+.el-table tbody td{
+  padding:9px 12px;color:var(--text);outline:none;
+}
+.el-table tbody td[contenteditable=true]:focus{
+  background:#6366f115;border-bottom:1px solid var(--accent);
+}
+.el-table-add-row{
+  width:100%;padding:7px;background:transparent;border:1px dashed var(--border2);
+  color:var(--dim);border-radius:0 0 6px 6px;cursor:pointer;font-size:12px;
+  font-family:inherit;transition:all .15s;
+}
+.el-table-add-row:hover{background:var(--card);color:var(--text);}
+/* Modal trigger btn */
+.el-modal-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;background:var(--surface);color:var(--accent2);
+  border:1px solid var(--accent);border-radius:6px;font-size:14px;
+  font-family:inherit;cursor:pointer;font-weight:500;
+}
+.el-modal-btn:hover{background:#6366f122;}
+/* Navbar */
+.el-navbar{
+  background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:10px 16px;display:flex;align-items:center;gap:16px;
+}
+.el-navbar .nav-brand{font-weight:700;font-size:15px;color:#fff;}
+.el-navbar .nav-links{display:flex;gap:12px;}
+.el-navbar .nav-link{font-size:13px;color:var(--muted);cursor:pointer;}
+.el-navbar .nav-link:hover{color:var(--text);}
+.el-navbar .ms-auto{margin-left:auto;}
+/* Select */
+.el-select{
+  width:100%;padding:8px 12px;background:var(--card);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);font-size:14px;font-family:inherit;outline:none;
+  cursor:pointer;
+}
+/* Chart placeholder */
+.el-chart-placeholder{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  gap:8px;color:var(--dim);font-size:13px;
+}
+.el-chart-placeholder i{font-size:36px;color:var(--border2);}
+
+/* ── MODAL OVERLAY ── */
+#modal-overlay{
+  display:none;position:fixed;inset:0;background:#000a;z-index:1000;
+  align-items:center;justify-content:center;
+}
+#modal-overlay.show{display:flex;}
+.app-modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;
+  position:relative;
+}
+.modal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}
+.modal-header h3{font-size:18px;font-weight:600;color:#fff;}
+.modal-close{
+  background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;
+  padding:0;line-height:1;
+}
+.modal-close:hover{color:var(--text);}
+.modal-body{font-size:14px;color:var(--muted);line-height:1.6;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+.modal-footer button{padding:8px 20px;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer;border:1px solid var(--border);}
+.modal-footer .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.modal-footer .btn-secondary{background:transparent;color:var(--muted);}
+
+/* ── CONTEXT MENU ── */
+#ctx-menu{
+  display:none;position:fixed;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:4px;z-index:5000;min-width:160px;
+  box-shadow:0 8px 24px #0006;
+}
+.ctx-item{
+  padding:7px 12px;border-radius:5px;font-size:13px;cursor:pointer;
+  color:var(--text);display:flex;align-items:center;gap:8px;
+}
+.ctx-item:hover{background:var(--border);}
+.ctx-item.danger{color:var(--danger);}
+.ctx-sep{height:1px;background:var(--border);margin:3px 0;}
+
+/* ── TOAST ── */
+#toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast-item{
+  padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  animation:slideIn .2s ease;
+}
+.toast-item.success{border-color:var(--success);color:var(--success);}
+.toast-item.danger{border-color:var(--danger);color:var(--danger);}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:none;opacity:1;}}
+
+/* ── PREVIEW MODE ── */
+body.preview-mode #sidebar,body.preview-mode #toolbar{display:none;}
+body.preview-mode #canvas-wrap{left:0;top:0;}
+body.preview-mode .canvas-el{cursor:default;border-color:transparent!important;}
+body.preview-mode .canvas-el.selected{border-color:transparent!important;}
+body.preview-mode .el-toolbar,.resize-handle{display:none!important;}
+#preview-bar{
+  display:none;position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:var(--accent);color:#fff;padding:8px 16px;font-size:13px;
+  align-items:center;gap:10px;
+}
+body.preview-mode #preview-bar{display:flex;}
+
+/* Select input */
+select.prop-input option{background:var(--card);color:var(--text);}
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <div class="brand">Web<span>Craft</span></div>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="undo-btn" title="Undo"><i class="bi bi-arrow-counterclockwise"></i></button>
+  <button class="tb-btn" id="redo-btn" title="Redo"><i class="bi bi-arrow-clockwise"></i></button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="grid-btn"><i class="bi bi-grid-3x3"></i> Grid</button>
+  <button class="tb-btn" id="snap-btn"><i class="bi bi-magnet"></i> Snap</button>
+  <div class="spacer"></div>
+  <button class="tb-btn" id="clear-btn"><i class="bi bi-trash"></i> Clear</button>
+  <button class="tb-btn" id="export-btn"><i class="bi bi-code-slash"></i> Export HTML</button>
+  <button class="tb-btn" id="preview-btn"><i class="bi bi-play-fill"></i> Preview</button>
+</div>
+
+<!-- Preview bar (preview mode) -->
+<div id="preview-bar">
+  <i class="bi bi-eye-fill"></i> Preview Mode
+  <button onclick="exitPreview()" style="margin-left:auto;background:#fff3;border:1px solid #fff5;color:#fff;padding:4px 12px;border-radius:5px;cursor:pointer;font-size:12px;font-family:inherit;">← Exit Preview</button>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="sidebar-header">Components</div>
+  <input class="comp-search" id="comp-search" placeholder="Search components…" type="search"/>
+  <div id="component-list">
+    <div class="comp-group">
+      <div class="comp-group-label">Layout</div>
+      <div class="comp-item" draggable="true" data-type="container"><i class="bi bi-square-fill" style="color:#374060"></i><div><div class="comp-name">Container</div><div class="comp-desc">Box / card wrapper</div></div></div>
+      <div class="comp-item" draggable="true" data-type="navbar"><i class="bi bi-layout-text-sidebar" style="color:#818cf8"></i><div><div class="comp-name">Navbar</div><div class="comp-desc">Navigation bar</div></div></div>
+      <div class="comp-item" draggable="true" data-type="divider"><i class="bi bi-dash-lg" style="color:#4a5568"></i><div><div class="comp-name">Divider</div><div class="comp-desc">Horizontal rule</div></div></div>
+    </div>
+    <div class="comp-group">
+      <div class="comp-group-label">Typography</div>
+      <div class="comp-item" draggable="true" data-type="heading"><i class="bi bi-type-h1" style="color:#fff"></i><div><div class="comp-name">Heading</div><div class="comp-desc">H1 – H4 text</div></div></div>
+      <div class="comp-item" draggable="true" data-type="text"><i class="bi bi-paragraph" style="color:#8892a4"></i><div><div class="comp-name">Text Block</div><div class="comp-desc">Body paragraph</div></div></div>
+    </div>
+    <div class="comp-group">
+      <div class="comp-group-label">Controls</div>
+      <div class="comp-item" draggable="true" data-type="btn-primary"><i class="bi bi-capsule" style="color:#6366f1"></i><div><div class="comp-name">Primary Button</div><div class="comp-desc">Filled CTA</div></div></div>
+      <div class="comp-item" draggable="true" data-type="btn-secondary"><i class="bi bi-capsule" style="color:#8892a4"></i><div><div class="comp-name">Secondary Button</div><div class="comp-desc">Outlined button</div></div></div>
+      <div class="comp-item" draggable="true" data-type="btn-danger"><i class="bi bi-capsule" style="color:#ef4444"></i><div><div class="comp-name">Danger Button</div><div class="comp-desc">Destructive action</div></div></div>
+      <div class="comp-item" draggable="true" data-type="modal-trigger"><i class="bi bi-window" style="color:#818cf8"></i><div><div class="comp-name">Modal Button</div><div class="comp-desc">Opens a dialog</div></div></div>
+      <div class="comp-item" draggable="true" data-type="input"><i class="bi bi-input-cursor-text" style="color:#22c55e"></i><div><div class="comp-name">Text Input</div><div class="comp-desc">Text field</div></div></div>
+      <div class="comp-item" draggable="true" data-type="select"><i class="bi bi-chevron-bar-expand" style="color:#f59e0b"></i><div><div class="comp-name">Select</div><div class="comp-desc">Dropdown list</div></div></div>
+    </div>
+    <div class="comp-group">
+      <div class="comp-group-label">Data</div>
+      <div class="comp-item" draggable="true" data-type="table"><i class="bi bi-table" style="color:#22c55e"></i><div><div class="comp-name">Data Table</div><div class="comp-desc">Editable rows/cols</div></div></div>
+      <div class="comp-item" draggable="true" data-type="stat-card"><i class="bi bi-bar-chart-fill" style="color:#6366f1"></i><div><div class="comp-name">Stat Card</div><div class="comp-desc">KPI / metric</div></div></div>
+      <div class="comp-item" draggable="true" data-type="chart-bar"><i class="bi bi-bar-chart" style="color:#818cf8"></i><div><div class="comp-name">Bar Chart</div><div class="comp-desc">Interactive chart</div></div></div>
+      <div class="comp-item" draggable="true" data-type="chart-line"><i class="bi bi-graph-up" style="color:#818cf8"></i><div><div class="comp-name">Line Chart</div><div class="comp-desc">Trend chart</div></div></div>
+      <div class="comp-item" draggable="true" data-type="progress"><i class="bi bi-reception-4" style="color:#22c55e"></i><div><div class="comp-name">Progress Bar</div><div class="comp-desc">Percentage bar</div></div></div>
+    </div>
+    <div class="comp-group">
+      <div class="comp-group-label">Feedback</div>
+      <div class="comp-item" draggable="true" data-type="badge-success"><i class="bi bi-tag-fill" style="color:#22c55e"></i><div><div class="comp-name">Badge – Success</div><div class="comp-desc">Status pill</div></div></div>
+      <div class="comp-item" draggable="true" data-type="badge-warn"><i class="bi bi-tag-fill" style="color:#f59e0b"></i><div><div class="comp-name">Badge – Warning</div><div class="comp-desc">Status pill</div></div></div>
+      <div class="comp-item" draggable="true" data-type="badge-danger"><i class="bi bi-tag-fill" style="color:#ef4444"></i><div><div class="comp-name">Badge – Danger</div><div class="comp-desc">Status pill</div></div></div>
+      <div class="comp-item" draggable="true" data-type="alert-info"><i class="bi bi-info-circle-fill" style="color:#818cf8"></i><div><div class="comp-name">Alert – Info</div><div class="comp-desc">Info banner</div></div></div>
+      <div class="comp-item" draggable="true" data-type="alert-success"><i class="bi bi-check-circle-fill" style="color:#22c55e"></i><div><div class="comp-name">Alert – Success</div><div class="comp-desc">Success banner</div></div></div>
+      <div class="comp-item" draggable="true" data-type="alert-warn"><i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b"></i><div><div class="comp-name">Alert – Warning</div><div class="comp-desc">Warning banner</div></div></div>
+    </div>
+    <div class="comp-group">
+      <div class="comp-group-label">Media</div>
+      <div class="comp-item" draggable="true" data-type="image"><i class="bi bi-image" style="color:#818cf8"></i><div><div class="comp-name">Image</div><div class="comp-desc">Image placeholder</div></div></div>
+      <div class="comp-item" draggable="true" data-type="card"><i class="bi bi-card-text" style="color:#8892a4"></i><div><div class="comp-name">Content Card</div><div class="comp-desc">Title + body card</div></div></div>
+    </div>
+  </div>
+
+  <!-- Properties Panel -->
+  <div id="props-panel">
+    <div class="props-title"><i class="bi bi-sliders"></i> Properties</div>
+    <div id="no-sel">Select an element<br>to edit its properties</div>
+    <div id="prop-fields" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Canvas -->
+<div id="canvas-wrap">
+  <div id="canvas">
+    <div class="canvas-drop-hint" id="drop-hint">
+      <i class="bi bi-grid-1x2"></i>
+      <p>Drag components from the panel</p>
+      <small>or click any item to place it</small>
+    </div>
+    <div id="drop-indicator"></div>
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div id="modal-overlay">
+  <div class="app-modal" id="modal-content">
+    <div class="modal-header">
+      <h3 id="modal-title">Modal Title</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="modal-body">This is your modal content. Edit the title and body in the properties panel after selecting the Modal Button.</div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-duplicate"><i class="bi bi-copy"></i> Duplicate</div>
+  <div class="ctx-item" id="ctx-front"><i class="bi bi-layers-half"></i> Bring to front</div>
+  <div class="ctx-item" id="ctx-back"><i class="bi bi-layers"></i> Send to back</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" id="ctx-delete"><i class="bi bi-trash"></i> Delete</div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-wrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+// ── STATE ──
+let elements = [];
+let selectedId = null;
+let elCounter = 0;
+let dragType = null;
+let isDraggingEl = false;
+let dragOffset = {x:0,y:0};
+let isResizing = false;
+let resizeStart = {};
+let snapEnabled = true;
+let undoStack = [];
+let redoStack = [];
+const SNAP = 16;
+
+const canvas = document.getElementById('canvas');
+const dropHint = document.getElementById('drop-hint');
+const propsFields = document.getElementById('prop-fields');
+const noSel = document.getElementById('no-sel');
+const ctxMenu = document.getElementById('ctx-menu');
+
+// ── UTILS ──
+function uid(){ return 'el_'+(++elCounter); }
+function snap(v){ return snapEnabled ? Math.round(v/SNAP)*SNAP : v; }
+function toast(msg,type=''){
+  const t=document.createElement('div');
+  t.className='toast-item'+(type?' '+type:'');
+  t.textContent=msg;
+  document.getElementById('toast-wrap').appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+function saveUndo(){
+  undoStack.push(JSON.stringify(elements));
+  if(undoStack.length>50)undoStack.shift();
+  redoStack=[];
+}
+function cloneEl(el){ return JSON.parse(JSON.stringify(el)); }
+
+// ── COMPONENT DEFINITIONS ──
+const defaults = {
+  container:  {w:280,h:120,label:'Container'},
+  navbar:     {w:600,h:52,label:'Navbar'},
+  divider:    {w:300,h:20,label:'Divider'},
+  heading:    {w:300,h:50,label:'Heading',text:'Page Title',level:'h1'},
+  text:       {w:280,h:60,label:'Text Block',text:'Your paragraph text goes here.'},
+  'btn-primary':   {w:140,h:44,label:'Primary Button',text:'Click me',icon:''},
+  'btn-secondary': {w:150,h:44,label:'Secondary Button',text:'Cancel',icon:''},
+  'btn-danger':    {w:140,h:44,label:'Danger Button',text:'Delete',icon:''},
+  'modal-trigger': {w:180,h:44,label:'Modal Button',text:'Open Modal',modalTitle:'Confirm Action',modalBody:'Are you sure you want to proceed with this action?'},
+  input:      {w:240,h:40,label:'Text Input',placeholder:'Enter text…',inputType:'text'},
+  select:     {w:220,h:40,label:'Select',options:'Option 1\nOption 2\nOption 3'},
+  table:      {w:540,h:200,label:'Data Table',cols:'Name,Role,Status,Date',rows:[['Alice','Admin','Active','2025-01'],['Bob','Editor','Inactive','2025-02'],['Carol','Viewer','Active','2025-03']]},
+  'stat-card':{w:160,h:100,label:'Stat Card',value:'1,284',statLabel:'Total Users',trend:'+12%',trendDir:'up'},
+  'chart-bar':{w:360,h:220,label:'Bar Chart',chartTitle:'Monthly Revenue',chartData:'Jan:12,Feb:19,Mar:15,Apr:22,May:18,Jun:25'},
+  'chart-line':{w:360,h:220,label:'Line Chart',chartTitle:'Growth Trend',chartData:'Jan:5,Feb:9,Mar:14,Apr:11,May:18,Jun:23'},
+  progress:   {w:280,h:60,label:'Progress Bar',progressLabel:'Upload Progress',progressValue:65},
+  'badge-success':{w:90,h:30,label:'Badge Success',text:'Active'},
+  'badge-warn':   {w:90,h:30,label:'Badge Warning',text:'Pending'},
+  'badge-danger': {w:90,h:30,label:'Badge Danger',text:'Error'},
+  'alert-info':   {w:360,h:50,label:'Info Alert',text:'This is an informational message.'},
+  'alert-success':{w:360,h:50,label:'Success Alert',text:'Operation completed successfully!'},
+  'alert-warn':   {w:360,h:50,label:'Warning Alert',text:'Please review before proceeding.'},
+  image:      {w:240,h:160,label:'Image',src:'',alt:'Image placeholder'},
+  card:       {w:260,h:130,label:'Content Card',cardTitle:'Card Title',cardBody:'Describe something useful here. This card supports rich body text.'},
+};
+
+// ── RENDER ELEMENT HTML ──
+function renderInner(el){
+  const d=el.data, t=el.type;
+  if(t==='container') return `<div class="el-container" style="width:100%;height:100%;"></div>`;
+  if(t==='navbar') return `<div class="el-navbar"><span class="nav-brand">Brand</span><div class="nav-links"><span class="nav-link">Home</span><span class="nav-link">About</span><span class="nav-link">Docs</span></div><span class="ms-auto"><span class="el-badge badge-accent">v1.0</span></span></div>`;
+  if(t==='divider') return `<hr class="el-divider"/>`;
+  if(t==='heading'){
+    const tag=d.level||'h1';
+    const sz={h1:'28px',h2:'22px',h3:'18px',h4:'15px'}[tag]||'24px';
+    return `<${tag} class="el-heading" style="font-size:${sz}" contenteditable="false">${d.text}</${tag}>`;
+  }
+  if(t==='text') return `<p class="el-text" contenteditable="false">${d.text}</p>`;
+  if(t==='btn-primary') return `<button class="el-btn-primary">${d.icon?`<i class="bi bi-${d.icon}"></i>`:''}${d.text}</button>`;
+  if(t==='btn-secondary') return `<button class="el-btn-secondary">${d.icon?`<i class="bi bi-${d.icon}"></i>`:''}${d.text}</button>`;
+  if(t==='btn-danger') return `<button class="el-btn-danger">${d.icon?`<i class="bi bi-${d.icon}"></i>`:''}${d.text}</button>`;
+  if(t==='modal-trigger') return `<button class="el-modal-btn" onclick="openModalForEl('${el.id}')"><i class="bi bi-window"></i>${d.text}</button>`;
+  if(t==='input') return `<input class="el-input" type="${d.inputType||'text'}" placeholder="${d.placeholder||'Enter text…'}" onclick="event.stopPropagation()"/>`;
+  if(t==='select'){
+    const opts=(d.options||'').split('\n').map(o=>`<option>${o.trim()}</option>`).join('');
+    return `<select class="el-select" onclick="event.stopPropagation()">${opts}</select>`;
+  }
+  if(t==='table') return renderTable(d);
+  if(t==='stat-card') return `<div class="el-stat-card"><div class="stat-value">${d.value}</div><div class="stat-label">${d.statLabel}</div><div class="stat-trend ${d.trendDir||'up'}">${d.trendDir==='up'?'▲':'▼'} ${d.trend}</div></div>`;
+  if(t==='chart-bar'||t==='chart-line') return `<div class="el-chart-placeholder" style="width:100%;height:100%"><canvas id="chart_${el.id}" style="max-width:100%;max-height:100%"></canvas></div>`;
+  if(t==='progress') return `<div class="el-progress"><div class="bar-label"><span>${d.progressLabel}</span><span>${d.progressValue}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${d.progressValue}%"></div></div></div>`;
+  if(t==='badge-success') return `<span class="el-badge badge-success">${d.text}</span>`;
+  if(t==='badge-warn')    return `<span class="el-badge badge-warn">${d.text}</span>`;
+  if(t==='badge-danger')  return `<span class="el-badge badge-danger">${d.text}</span>`;
+  if(t==='alert-info')    return `<div class="el-alert alert-info"><i class="bi bi-info-circle-fill"></i> ${d.text}</div>`;
+  if(t==='alert-success') return `<div class="el-alert alert-success"><i class="bi bi-check-circle-fill"></i> ${d.text}</div>`;
+  if(t==='alert-warn')    return `<div class="el-alert alert-warn"><i class="bi bi-exclamation-triangle-fill"></i> ${d.text}</div>`;
+  if(t==='image') return d.src?`<div class="el-image"><img src="${d.src}" alt="${d.alt}"/></div>`:`<div class="el-image" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--dim);font-size:12px;"><i class="bi bi-image" style="font-size:32px;color:var(--border2)"></i>Enter image URL in properties</div>`;
+  if(t==='card') return `<div class="el-card"><div class="card-title">${d.cardTitle}</div><div class="card-body">${d.cardBody}</div></div>`;
+  return `<div style="color:var(--muted);font-size:12px;padding:8px">${t}</div>`;
+}
+
+function renderTable(d){
+  const cols=(d.cols||'Col1,Col2,Col3').split(',');
+  const rows=d.rows||[['Cell','Cell','Cell']];
+  let ths=cols.map(c=>`<th>${c}</th>`).join('');
+  let trs=rows.map((r,ri)=>`<tr>${cols.map((_,ci)=>`<td contenteditable="true" data-ri="${ri}" data-ci="${ci}">${r[ci]||''}</td>`).join('')}<td style="width:28px"><button onclick="delRow(this,event)" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:13px;" title="Remove row"><i class="bi bi-x-circle"></i></button></td></tr>`).join('');
+  return `<div class="el-table-wrap"><table class="el-table"><thead><tr>${ths}<th></th></tr></thead><tbody id="tbody_placeholder">${trs}</tbody></table><button class="el-table-add-row" onclick="addTableRow(this,event)"><i class="bi bi-plus"></i> Add row</button></div>`;
+}
+
+// ── CREATE DOM ELEMENT ──
+function createDomEl(el){
+  const div=document.createElement('div');
+  div.className='canvas-el';
+  div.id=el.id;
+  div.style.left=el.x+'px';
+  div.style.top=el.y+'px';
+  div.style.width=el.w+'px';
+  div.style.height=el.h+'px';
+  div.style.zIndex=el.z||1;
+  div.innerHTML=`
+    <div class="el-toolbar">
+      <button class="el-tb-btn" title="Duplicate" onclick="duplicateEl('${el.id}',event)"><i class="bi bi-copy"></i></button>
+      <button class="el-tb-btn" title="Move up" onclick="moveZEl('${el.id}','up',event)"><i class="bi bi-arrow-up-square"></i></button>
+      <button class="el-tb-btn" title="Move down" onclick="moveZEl('${el.id}','down',event)"><i class="bi bi-arrow-down-square"></i></button>
+      <button class="el-tb-btn danger" title="Delete" onclick="deleteEl('${el.id}',event)"><i class="bi bi-trash"></i></button>
+    </div>
+    <div class="el-inner" style="width:100%;height:100%;">${renderInner(el)}</div>
+    <div class="resize-handle" data-id="${el.id}"></div>`;
+  div.addEventListener('mousedown', e=>onElMousedown(e,el.id));
+  div.querySelector('.resize-handle').addEventListener('mousedown',e=>onResizeStart(e,el.id));
+  div.addEventListener('contextmenu', e=>showCtxMenu(e,el.id));
+  canvas.appendChild(div);
+  if(el.type==='chart-bar'||el.type==='chart-line') setTimeout(()=>renderChart(el),50);
+}
+
+function renderChart(el){
+  const cvs=document.getElementById('chart_'+el.id);
+  if(!cvs)return;
+  if(cvs._chartInstance){cvs._chartInstance.destroy();}
+  const entries=(el.data.chartData||'').split(',').map(s=>{const[l,v]=s.split(':');return{label:l,value:parseFloat(v)||0};});
+  const labels=entries.map(e=>e.label);
+  const vals=entries.map(e=>e.value);
+  const type=el.type==='chart-line'?'line':'bar';
+  cvs._chartInstance=new Chart(cvs,{
+    type,
+    data:{labels,datasets:[{label:el.data.chartTitle||'',data:vals,backgroundColor:'#6366f155',borderColor:'#6366f1',borderWidth:2,borderRadius:4,pointBackgroundColor:'#6366f1',tension:.4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#2a3050'},ticks:{color:'#8892a4',font:{size:11}}},y:{grid:{color:'#2a3050'},ticks:{color:'#8892a4',font:{size:11}}}}}
+  });
+}
+
+// ── PLACE ELEMENT ──
+function placeElement(type, x, y){
+  saveUndo();
+  const def=defaults[type]||{w:200,h:80,label:type};
+  const el={
+    id:uid(), type, x:snap(x), y:snap(y),
+    w:def.w, h:def.h, z:elements.length+1,
+    data:{...def}
+  };
+  elements.push(el);
+  createDomEl(el);
+  dropHint.style.display='none';
+  selectEl(el.id);
+  toast('Added '+def.label,'success');
+}
+
+// ── DRAG FROM SIDEBAR ──
+document.querySelectorAll('.comp-item').forEach(item=>{
+  item.addEventListener('dragstart',e=>{
+    dragType=item.dataset.type;
+    e.dataTransfer.setData('text/plain',dragType);
+  });
+  item.addEventListener('click',()=>{
+    // Click to place at center-ish
+    const r=canvas.getBoundingClientRect();
+    const def=defaults[item.dataset.type]||{w:200,h:80};
+    placeElement(item.dataset.type, 60+Math.random()*200, 60+Math.random()*200);
+  });
+});
+
+const canvasWrap=document.getElementById('canvas-wrap');
+canvasWrap.addEventListener('dragover',e=>{e.preventDefault();});
+canvasWrap.addEventListener('drop',e=>{
+  e.preventDefault();
+  if(!dragType)return;
+  const r=canvas.getBoundingClientRect();
+  const def=defaults[dragType]||{w:200,h:80};
+  const x=e.clientX-r.left-def.w/2+canvasWrap.scrollLeft;
+  const y=e.clientY-r.top-def.h/2+canvasWrap.scrollTop;
+  placeElement(dragType, x, y);
+  dragType=null;
+});
+
+// ── DRAG ELEMENTS ON CANVAS ──
+function onElMousedown(e, id){
+  if(e.target.closest('.el-toolbar,.resize-handle,button,input,select,td,canvas'))return;
+  e.preventDefault();
+  selectEl(id);
+  isDraggingEl=true;
+  const el=elements.find(x=>x.id===id);
+  const r=canvas.getBoundingClientRect();
+  dragOffset={
+    x:e.clientX-r.left+canvasWrap.scrollLeft-el.x,
+    y:e.clientY-r.top+canvasWrap.scrollTop-el.y
+  };
+  const move=(ev)=>{
+    if(!isDraggingEl)return;
+    const nx=snap(ev.clientX-r.left+canvasWrap.scrollLeft-dragOffset.x);
+    const ny=snap(ev.clientY-r.top+canvasWrap.scrollTop-dragOffset.y);
+    el.x=Math.max(0,nx); el.y=Math.max(0,ny);
+    const dom=document.getElementById(id);
+    if(dom){dom.style.left=el.x+'px';dom.style.top=el.y+'px';}
+  };
+  const up=()=>{
+    if(isDraggingEl)saveUndo();
+    isDraggingEl=false;
+    document.removeEventListener('mousemove',move);
+    document.removeEventListener('mouseup',up);
+  };
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',up);
+}
+
+// ── RESIZE ──
+function onResizeStart(e,id){
+  e.stopPropagation(); e.preventDefault();
+  isResizing=true;
+  const el=elements.find(x=>x.id===id);
+  resizeStart={x:e.clientX,y:e.clientY,w:el.w,h:el.h,el};
+  const move=(ev)=>{
+    const nw=snap(Math.max(80,resizeStart.w+(ev.clientX-resizeStart.x)));
+    const nh=snap(Math.max(30,resizeStart.h+(ev.clientY-resizeStart.y)));
+    resizeStart.el.w=nw; resizeStart.el.h=nh;
+    const dom=document.getElementById(resizeStart.el.id);
+    if(dom){dom.style.width=nw+'px';dom.style.height=nh+'px';}
+  };
+  const up=()=>{
+    saveUndo();
+    isResizing=false;
+    document.removeEventListener('mousemove',move);
+    document.removeEventListener('mouseup',up);
+    if(resizeStart.el.type==='chart-bar'||resizeStart.el.type==='chart-line') renderChart(resizeStart.el);
+  };
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',up);
+}
+
+// ── SELECT ──
+function selectEl(id){
+  document.querySelectorAll('.canvas-el').forEach(e=>e.classList.remove('selected'));
+  selectedId=id;
+  if(id){
+    document.getElementById(id)?.classList.add('selected');
+    renderProps(id);
+  } else {
+    propsFields.style.display='none';
+    noSel.style.display='block';
+  }
+}
+canvas.addEventListener('mousedown',e=>{
+  if(e.target===canvas||e.target===dropHint||e.target.closest('.canvas-drop-hint')){selectEl(null);}
+});
+
+// ── PROPERTIES PANEL ──
+function renderProps(id){
+  const el=elements.find(x=>x.id===id);
+  if(!el){propsFields.style.display='none';noSel.style.display='block';return;}
+  noSel.style.display='none';
+  propsFields.style.display='block';
+  const d=el.data;
+  let html='';
+
+  const textField=(key,lbl,ta=false)=>`<div class="prop-row"><label class="prop-label">${lbl}</label>${ta?`<textarea class="prop-input" rows="3" oninput="setProp('${id}','${key}',this.value)">${d[key]||''}</textarea>`:`<input class="prop-input" value="${(d[key]||'').replace(/"/g,'&quot;')}" oninput="setProp('${id}','${key}',this.value)"/>`}</div>`;
+  const numField=(key,lbl,min=0,max=9999)=>`<div class="prop-row"><label class="prop-label">${lbl}</label><input class="prop-input" type="number" min="${min}" max="${max}" value="${d[key]||0}" oninput="setProp('${id}','${key}',parseFloat(this.value)||0)"/></div>`;
+
+  html+=`<div class="prop-row"><label class="prop-label">Position X / Y</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input class="prop-input" type="number" value="${Math.round(el.x)}" oninput="setPos('${id}','x',this.value)"/><input class="prop-input" type="number" value="${Math.round(el.y)}" oninput="setPos('${id}','y',this.value)"/></div></div>`;
+  html+=`<div class="prop-row"><label class="prop-label">Width / Height</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input class="prop-input" type="number" value="${Math.round(el.w)}" oninput="setSize('${id}','w',this.value)"/><input class="prop-input" type="number" value="${Math.round(el.h)}" oninput="setSize('${id}','h',this.value)"/></div></div>`;
+
+  if(['btn-primary','btn-secondary','btn-danger','modal-trigger','heading','text','badge-success','badge-warn','badge-danger','alert-info','alert-success','alert-warn'].includes(el.type)){
+    html+=textField('text','Label / Text');
+  }
+  if(['btn-primary','btn-secondary','btn-danger'].includes(el.type)){
+    html+=textField('icon','Bootstrap Icon Name');
+  }
+  if(el.type==='heading'){
+    html+=`<div class="prop-row"><label class="prop-label">Level</label><select class="prop-input" onchange="setProp('${id}','level',this.value)"><option ${d.level==='h1'?'selected':''}>h1</option><option ${d.level==='h2'?'selected':''}>h2</option><option ${d.level==='h3'?'selected':''}>h3</option><option ${d.level==='h4'?'selected':''}>h4</option></select></div>`;
+  }
+  if(el.type==='text'){html+=textField('text','Content',true);}
+  if(el.type==='input'){
+    html+=textField('placeholder','Placeholder');
+    html+=`<div class="prop-row"><label class="prop-label">Input type</label><select class="prop-input" onchange="setProp('${id}','inputType',this.value)"><option ${d.inputType==='text'?'selected':''} value="text">text</option><option ${d.inputType==='email'?'selected':''} value="email">email</option><option ${d.inputType==='password'?'selected':''} value="password">password</option><option ${d.inputType==='number'?'selected':''} value="number">number</option></select></div>`;
+  }
+  if(el.type==='select'){html+=textField('options','Options (one per line)',true);}
+  if(el.type==='modal-trigger'){
+    html+=textField('text','Button Label');
+    html+=textField('modalTitle','Modal Title');
+    html+=textField('modalBody','Modal Body',true);
+  }
+  if(el.type==='stat-card'){
+    html+=textField('value','Value');
+    html+=textField('statLabel','Label');
+    html+=textField('trend','Trend');
+    html+=`<div class="prop-row"><label class="prop-label">Direction</label><select class="prop-input" onchange="setProp('${id}','trendDir',this.value)"><option value="up" ${d.trendDir==='up'?'selected':''}>Up</option><option value="down" ${d.trendDir==='down'?'selected':''}>Down</option></select></div>`;
+  }
+  if(el.type==='chart-bar'||el.type==='chart-line'){
+    html+=textField('chartTitle','Chart Title');
+    html+=textField('chartData','Data (Label:Val, …)');
+  }
+  if(el.type==='progress'){
+    html+=textField('progressLabel','Label');
+    html+=numField('progressValue','Value (%)',0,100);
+  }
+  if(el.type==='image'){
+    html+=textField('src','Image URL');
+    html+=textField('alt','Alt text');
+  }
+  if(el.type==='card'){
+    html+=textField('cardTitle','Card Title');
+    html+=textField('cardBody','Card Body',true);
+  }
+  if(el.type==='table'){
+    html+=textField('cols','Columns (comma-separated)');
+    html+=`<div class="prop-row"><button class="prop-btn" onclick="addTableColFromProps('${id}')"><i class="bi bi-plus-lg"></i> Add column</button></div>`;
+  }
+  html+=`<div class="prop-row" style="margin-top:8px"><button class="prop-btn danger" onclick="deleteEl('${id}')"><i class="bi bi-trash"></i> Delete element</button></div>`;
+  propsFields.innerHTML=html;
+}
+
+function setProp(id,key,val){
+  const el=elements.find(x=>x.id===id);
+  if(!el)return;
+  el.data[key]=val;
+  const dom=document.getElementById(id);
+  if(dom){
+    dom.querySelector('.el-inner').innerHTML=renderInner(el);
+    if(el.type==='chart-bar'||el.type==='chart-line') setTimeout(()=>renderChart(el),30);
+  }
+}
+function setPos(id,axis,val){
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  el[axis]=parseFloat(val)||0;
+  const dom=document.getElementById(id);
+  if(dom) dom.style[axis==='x'?'left':'top']=el[axis]+'px';
+}
+function setSize(id,axis,val){
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  el[axis]=parseFloat(val)||80;
+  const dom=document.getElementById(id);
+  if(dom) dom.style[axis==='w'?'width':'height']=el[axis]+'px';
+  if(el.type==='chart-bar'||el.type==='chart-line') setTimeout(()=>renderChart(el),30);
+}
+
+// ── TABLE HELPERS ──
+function addTableRow(btn,e){
+  e.stopPropagation();
+  const elId=btn.closest('.canvas-el').id;
+  const el=elements.find(x=>x.id===elId);
+  if(!el)return;
+  const cols=(el.data.cols||'').split(',');
+  el.data.rows.push(cols.map(()=>''));
+  const dom=document.getElementById(elId);
+  if(dom) dom.querySelector('.el-inner').innerHTML=renderInner(el);
+}
+function delRow(btn,e){
+  e.stopPropagation();
+  const tr=btn.closest('tr');
+  const tbody=tr.closest('tbody');
+  const elId=btn.closest('.canvas-el').id;
+  const el=elements.find(x=>x.id===elId);
+  if(!el)return;
+  const ri=parseInt(tr.querySelector('td').dataset.ri);
+  el.data.rows.splice(ri,1);
+  const dom=document.getElementById(elId);
+  if(dom) dom.querySelector('.el-inner').innerHTML=renderInner(el);
+}
+function addTableColFromProps(id){
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  const name=prompt('Column name:','New Col');if(!name)return;
+  saveUndo();
+  el.data.cols+=','+name;
+  el.data.rows.forEach(r=>r.push(''));
+  const dom=document.getElementById(id);
+  if(dom){dom.querySelector('.el-inner').innerHTML=renderInner(el);}
+}
+
+// ── DELETE / DUPLICATE / Z ──
+function deleteEl(id,e){
+  if(e){e.stopPropagation();}
+  saveUndo();
+  elements=elements.filter(x=>x.id!==id);
+  document.getElementById(id)?.remove();
+  if(selectedId===id)selectEl(null);
+  if(elements.length===0)dropHint.style.display='';
+  toast('Deleted');
+}
+function duplicateEl(id,e){
+  if(e){e.stopPropagation();}
+  saveUndo();
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  const clone={...cloneEl(el),id:uid(),x:el.x+24,y:el.y+24,z:elements.length+2};
+  elements.push(clone);
+  createDomEl(clone);
+  selectEl(clone.id);
+  toast('Duplicated');
+}
+function moveZEl(id,dir,e){
+  e?.stopPropagation();
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  el.z=dir==='up'?(el.z||1)+1:Math.max(1,(el.z||1)-1);
+  document.getElementById(id).style.zIndex=el.z;
+}
+
+// ── CONTEXT MENU ──
+function showCtxMenu(e,id){
+  e.preventDefault(); e.stopPropagation();
+  selectEl(id);
+  ctxMenu.style.display='block';
+  ctxMenu.style.left=e.clientX+'px';
+  ctxMenu.style.top=e.clientY+'px';
+  ctxMenu._id=id;
+}
+document.addEventListener('click',()=>ctxMenu.style.display='none');
+document.getElementById('ctx-duplicate').onclick=()=>{duplicateEl(ctxMenu._id);};
+document.getElementById('ctx-delete').onclick=()=>{deleteEl(ctxMenu._id);};
+document.getElementById('ctx-front').onclick=()=>{moveZEl(ctxMenu._id,'up');};
+document.getElementById('ctx-back').onclick=()=>{moveZEl(ctxMenu._id,'down');};
+
+// ── MODAL LOGIC ──
+function openModalForEl(id){
+  const el=elements.find(x=>x.id===id);
+  if(!el)return;
+  document.getElementById('modal-title').textContent=el.data.modalTitle||'Modal';
+  document.getElementById('modal-body').textContent=el.data.modalBody||'';
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('show');}
+document.getElementById('modal-overlay').addEventListener('mousedown',e=>{if(e.target===document.getElementById('modal-overlay'))closeModal();});
+
+// ── UNDO / REDO ──
+function applyState(state){
+  elements=JSON.parse(state);
+  canvas.querySelectorAll('.canvas-el').forEach(e=>e.remove());
+  elements.forEach(el=>createDomEl(el));
+  selectEl(null);
+  dropHint.style.display=elements.length?'none':'';
+}
+document.getElementById('undo-btn').onclick=()=>{
+  if(!undoStack.length)return;
+  redoStack.push(JSON.stringify(elements));
+  applyState(undoStack.pop());
+  toast('Undone');
+};
+document.getElementById('redo-btn').onclick=()=>{
+  if(!redoStack.length)return;
+  undoStack.push(JSON.stringify(elements));
+  applyState(redoStack.pop());
+  toast('Redone');
+};
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();document.getElementById('undo-btn').click();}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='Z'))){e.preventDefault();document.getElementById('redo-btn').click();}
+  if((e.key==='Delete'||e.key==='Backspace')&&selectedId&&!document.activeElement.matches('input,textarea,[contenteditable]')){
+    deleteEl(selectedId);
+  }
+  if((e.ctrlKey||e.metaKey)&&e.key==='d'&&selectedId){e.preventDefault();duplicateEl(selectedId);}
+});
+
+// ── SNAP / GRID ──
+let gridVisible=true;
+document.getElementById('snap-btn').addEventListener('click',function(){
+  snapEnabled=!snapEnabled;
+  this.classList.toggle('active',snapEnabled);
+  toast('Snap '+(snapEnabled?'on':'off'));
+});
+document.getElementById('snap-btn').classList.add('active');
+document.getElementById('grid-btn').addEventListener('click',function(){
+  gridVisible=!gridVisible;
+  document.getElementById('canvas-wrap').style.backgroundImage=gridVisible?'repeating-linear-gradient(0deg,transparent,transparent 31px,var(--border) 31px,var(--border) 32px),repeating-linear-gradient(90deg,transparent,transparent 31px,var(--border) 31px,var(--border) 32px)':'none';
+  this.classList.toggle('active',gridVisible);
+});
+document.getElementById('grid-btn').classList.add('active');
+
+// ── CLEAR ──
+document.getElementById('clear-btn').onclick=()=>{
+  if(!elements.length)return;
+  if(!confirm('Clear all elements?'))return;
+  saveUndo();
+  elements=[];
+  canvas.querySelectorAll('.canvas-el').forEach(e=>e.remove());
+  selectEl(null);
+  dropHint.style.display='';
+  toast('Canvas cleared');
+};
+
+// ── PREVIEW ──
+document.getElementById('preview-btn').onclick=()=>{
+  document.body.classList.add('preview-mode');
+};
+function exitPreview(){document.body.classList.remove('preview-mode');}
+
+// ── EXPORT ──
+document.getElementById('export-btn').onclick=()=>{
+  // Sync any live table cell edits
+  elements.forEach(el=>{
+    if(el.type==='table'){
+      const dom=document.getElementById(el.id);
+      if(dom){
+        dom.querySelectorAll('td[data-ri]').forEach(td=>{
+          const ri=parseInt(td.dataset.ri),ci=parseInt(td.dataset.ci);
+          if(el.data.rows[ri])el.data.rows[ri][ci]=td.textContent;
+        });
+      }
+    }
+  });
+  const styles=`<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh;}
+:root{--bg:#0f1117;--surface:#181c27;--card:#1e2336;--border:#2a3050;--border2:#374060;--accent:#6366f1;--accent2:#818cf8;--text:#e2e8f0;--muted:#8892a4;--dim:#4a5568;--danger:#ef4444;--success:#22c55e;--warn:#f59e0b;--radius:8px;}
+${document.querySelector('style').textContent.split('/* ── TOOLBAR')[0].split('/* ── SIDEBAR')[0]}
+</style>`;
+  const body=elements.map(el=>`<div style="position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1}">${renderInner(el)}</div>`).join('\n');
+  const html=`<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8"/>\n<meta name="viewport" content="width=device-width,initial-scale=1.0"/>\n<title>My App</title>\n<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>\n${styles}\n</head>\n<body>\n<div style="position:relative;min-height:100vh;">\n${body}\n</div>\n</body>\n</html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='my-app.html';
+  a.click();
+  toast('HTML exported!','success');
+};
+
+// ── SEARCH FILTER ──
+document.getElementById('comp-search').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('.comp-item').forEach(item=>{
+    const name=item.querySelector('.comp-name').textContent.toLowerCase();
+    const desc=item.querySelector('.comp-desc').textContent.toLowerCase();
+    item.style.display=(name.includes(q)||desc.includes(q))?'':'none';
+  });
+  document.querySelectorAll('.comp-group').forEach(g=>{
+    const anyVisible=[...g.querySelectorAll('.comp-item')].some(i=>i.style.display!=='none');
+    g.style.display=anyVisible?'':'none';
+  });
+});
+
+// ── KEYBOARD SHORTCUTS DISPLAY ──
+toast('Welcome to WebCraft! Drag components to build your app.','');
+</script>
+</body>
+</html>
