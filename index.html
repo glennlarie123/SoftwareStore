@@ -96,7 +96,6 @@
       crossorigin="anonymous"
     />
     <style>
-
   .info-box {
     display: flex;
     align-items: stretch;
@@ -185,9 +184,330 @@
       animation: none !important;
     }
   }
+  .software-slider {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    margin-bottom: 25px;
+}
+
+.slide::before {
+    content:'';
+    position:absolute;
+    inset:0;
+}
+
+.slide-content {
+    text-align: center;
+    color: white;
+    padding: 20px;
+}
+
+.slide-content img {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 20px;
+}
+
+.slide-content h3 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.slide-content p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: rgba(0,0,0,0.3);
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 5;
+}
+
+.slider-btn:hover {
+    background: rgba(0,0,0,0.6);
+}
+
+.prev {
+    left: 15px;
+}
+
+.next {
+    right: 15px;
+}
+
+.slider-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.dot.active {
+    background: white;
+}
+
+@media (max-width: 768px) {
+    .software-slider {
+        height: 260px;
+    }
+
+    .slide-content img {
+        font-size: 2.5rem;
+    }
+
+    .slide-content h3 {
+        font-size: 1.4rem;
+    }
+
+    .slide-content p {
+        font-size: 0.9rem;
+    }
+}.software-slider {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    border-radius: 14px;
+    margin-bottom: 25px;
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .7s ease;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide.active {
+    opacity: 1;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35); /* adjust 0.2–0.5 */
+}
+
+.slide-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+    padding: 20px;
+}
+
+.slide-content i {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 20px;
+}
+
+.slide-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.slide-content p {
+    font-size: 1.1rem;
+}
+
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 5;
+}
+
+.prev { left: 20px; }
+.next { right: 20px; }
+
+.slider-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 5;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.4);
+    cursor: pointer;
+}
+
+.dot.active {
+    background: white;
+}
+@media (max-width: 768px) {
+    .slide-content img {
+        width: 70px;
+        height: 70px;
+    }
+}
 </style>
   </head>
 
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Header -->
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Modal Title</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Body -->
+      <div class="modal-body">
+                        <!-- Header -->
+                <div class="row mb-4">
+                  <div class="col-sm-6">
+                    <h2 class="h4 mb-0 text-primary fw-semibold">Software Store, Inc.</h2>
+                    <p class="text-secondary mb-0 small">
+                     Guillermo Laviña Ave,</br>
+                     Valencia City, Bukidnon</br>
+                      billing@example.com
+                    </p>
+                  </div>
+                  <div class="col-sm-6 text-sm-end">
+                    <h1 class="h2 mb-1">Invoice</h1>
+                    <p class="text-secondary mb-0">
+                      <span class="fw-semibold">#</span>INV-2026-00428
+                    </p>
+                    <span class="badge text-bg-success mt-1">Paid</span>
+                  </div>
+                </div>
+
+                <!-- Billing details -->
+                <div class="row mb-4">
+                  <div class="col-sm-6">
+                    <p class="text-secondary small mb-1">Billed to</p>
+                    <p class="mb-0 fw-semibold">SS Corporation</p>
+                    <p class="text-secondary small mb-0">
+                      Attn: Jane Doe<br />
+                      1234 Market Street<br />
+                      San Francisco, 8709
+                    </p>
+                  </div>
+                  <div class="col-sm-6 text-sm-end">
+                    <p class="text-secondary small mb-1">Issue date</p>
+                    <p class="mb-2">May 18, 2026</p>
+                    <p class="text-secondary small mb-1">Due date</p>
+                    <p class="mb-0">June 1, 2026</p>
+                  </div>
+                </div>
+
+                <!-- Items -->
+                <div class="table-responsive mb-3">
+                  <table class="table align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th class="border-top-0">Description</th>
+                        <th class="border-top-0 text-end" style="width: 6rem">Qty</th>
+                        <th class="border-top-0 text-end" style="width: 9rem">Unit price</th>
+                        <th class="border-top-0 text-end" style="width: 9rem">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <p class="mb-0 fw-semibold">Pro plan subscription</p>
+                          <small class="text-secondary">May 18 - Jun 18, 2026</small>
+                        </td>
+                        <td class="text-end">1</td>
+                        <td class="text-end">₱29.00</td>
+                        <td class="text-end">₱29.00</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <p class="mb-0 fw-semibold">Additional seats</p>
+                          <small class="text-secondary">Pro-rated for current period</small>
+                        </td>
+                        <td class="text-end">3</td>
+                        <td class="text-end">₱12.50</td>
+                        <td class="text-end">₱37.50</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <p class="mb-0 fw-semibold">SMS notifications add-on</p>
+                          <small class="text-secondary">1,000 messages</small>
+                        </td>
+                        <td class="text-end">1</td>
+                        <td class="text-end">₱5.00</td>
+                        <td class="text-end">₱5.00</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Totals -->
+                <div class="row justify-content-end">
+                  <div class="col-md-5 col-lg-4">
+                    <dl class="row mb-0">
+                      <dt class="col-7 text-secondary fw-normal">Subtotal</dt>
+                      <dd class="col-5 text-end mb-2">₱71.50</dd>
+                      <dt class="col-7 text-secondary fw-normal">Tax (8.25%)</dt>
+                      <dd class="col-5 text-end mb-2">₱5.90</dd>
+                      <dt class="col-7 fw-semibold border-top pt-2">Total due</dt>
+                      <dd class="col-5 text-end fw-semibold border-top pt-2 mb-0">₱77.40 USD</dd>
+                    </dl>
+                  </div>
+                </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
   <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
     <!--begin::App Wrapper-->
     <div class="app-wrapper">
@@ -374,6 +694,77 @@
           <!--begin::Container-->
           <div class="container-fluid">
             
+ <div class="software-slider">
+    
+    <div class="slide active" style="background-image: url('./img/Inventory System.png');">
+        <div class="overlay"></div>
+        <div class="slide-content">
+            <i class="bi bi-boxes"></i>
+            <h3>Ingco Inventory System</h3>
+            <p>Manage stock levels, track products, and optimize your inventory</p>
+        </div>
+    </div>
+
+    <div class="slide" style="background-image: url('./img/Ordering System.png');">
+        <div class="overlay"></div>
+        <div class="slide-content">
+            <i class="bi bi-cart-check"></i>
+            <h3>Annipie Ordering System</h3>
+            <p>Streamline your order management and customer purchasing</p>
+        </div>
+    </div>
+
+    <div class="slide" style="background-image: url('./img/Management System.png');">
+        <div class="overlay"></div>
+        <div class="slide-content">
+            <i class="bi bi-diagram-3"></i>
+            <h3>Management System</h3>
+            <p>Centralize business operations and improve efficiency</p>
+        </div>
+    </div>
+
+    <div class="slide" style="background-image: url('./img/Payroll System.png');">
+        <div class="overlay"></div>
+        <div class="slide-content">
+            <i class="bi bi-cash-coin"></i>
+            <h3>Payroll System</h3>
+            <p>Automate employee payments and salary management</p>
+        </div>
+    </div>
+
+    <div class="slide" style="background-image: url('/img/Voting System.png');">
+        <div class="overlay"></div>
+        <div class="slide-content">
+            <i class="bi bi-hand-thumbs-up"></i>
+            <h3>Voting System</h3>
+            <p>Conduct secure and transparent voting processes</p>
+        </div>
+    </div>
+
+    <div class="slide" style="background-image: url('/img/POS System.png');">
+        <div class="overlay"></div>
+        <div class="slide-content">
+            <i class="bi bi-credit-card"></i>
+            <h3>POS System</h3>
+            <p>Complete point of sale solution for retail operations</p>
+        </div>
+    </div>
+
+    <div class="slide" style="background-image: url('/img/Tracking System.png');">
+        <div class="overlay"></div>
+        <div class="slide-content">
+            <i class="bi bi-geo-alt"></i>
+            <h3>Tracking System</h3>
+            <p>Monitor shipments and deliveries in real time</p>
+        </div>
+    </div>
+
+    <button class="slider-btn prev">&#10094;</button>
+    <button class="slider-btn next">&#10095;</button>
+
+    <div class="slider-dots"></div>
+</div>
+
             <div class="row">
               <div class="col-12 col-sm-6 col-md-3">
                 <div class="info-box">
@@ -382,7 +773,7 @@
                   </span>
 
                   <div class="info-box-content">
-                    <span class="info-box-text">CPU Traffic</span>
+                    <span class="info-box-text">Purchased</span>
                     <span class="info-box-number">
                       10
                       <small>%</small>
@@ -400,7 +791,7 @@
                   </span>
 
                   <div class="info-box-content">
-                    <span class="info-box-text">Likes</span>
+                    <span class="info-box-text">Views</span>
                     <span class="info-box-number">41,410</span>
                   </div>
                   <!-- /.info-box-content -->
@@ -420,7 +811,7 @@
 
                   <div class="info-box-content">
                     <span class="info-box-text">Sales</span>
-                    <span class="info-box-number">760</span>
+                    <span class="info-box-number">7</span>
                   </div>
                   <!-- /.info-box-content -->
                 </div>
@@ -573,7 +964,7 @@
                           <span class="text-danger">
                             <i class="bi bi-caret-down-fill"></i> 18%
                           </span>
-                          <h5 class="fw-bold mb-0">2</h5>
+                          <h5 class="fw-bold mb-0">7</h5>
                           <span class="text-uppercase">GOAL COMPLETIONS</span>
                         </div>
                       </div>
@@ -620,7 +1011,7 @@
                           <tr>
                             <td>
                               <a
-                                href="invoice.html"
+                                data-bs-toggle="modal" data-bs-target="#exampleModal"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR9842</a
                               >
@@ -636,7 +1027,7 @@
                           <tr>
                             <td>
                               <a
-                                href="invoice.html"
+                                data-bs-toggle="modal" data-bs-target="#exampleModal"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR1848</a
                               >
@@ -652,7 +1043,7 @@
                           <tr>
                             <td>
                               <a
-                                href="invoice.html"
+                                data-bs-toggle="modal" data-bs-target="#exampleModal"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR7429</a
                               >
@@ -668,7 +1059,7 @@
                           <tr>
                             <td>
                               <a
-                                href="invoice.html"
+                                data-bs-toggle="modal" data-bs-target="#exampleModal"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR7429</a
                               >
@@ -684,7 +1075,7 @@
                           <tr>
                             <td>
                               <a
-                                href="invoice.html"
+                                data-bs-toggle="modal" data-bs-target="#exampleModal"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR1848</a
                               >
@@ -700,7 +1091,7 @@
                           <tr>
                             <td>
                               <a
-                                href="invoice.html"
+                                data-bs-toggle="modal" data-bs-target="#exampleModal"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR7429</a
                               >
@@ -716,7 +1107,7 @@
                           <tr>
                             <td>
                               <a
-                                href="invoice.html"
+                                data-bs-toggle="modal" data-bs-target="#exampleModal"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR9842</a
                               >
@@ -735,14 +1126,6 @@
                     <!-- /.table-responsive -->
                   </div>
                   <!-- /.card-body -->
-                  <div class="card-footer clearfix">
-                    <a href="javascript:void(0)" class="btn btn-sm btn-primary float-start">
-                      Place New Order
-                    </a>
-                    <a href="javascript:void(0)" class="btn btn-sm btn-secondary float-end">
-                      View All Orders
-                    </a>
-                  </div>
                   <!-- /.card-footer -->
                 </div>
                 <!-- /.card -->
@@ -1035,6 +1418,70 @@
       //-----------------
     </script>
     <!--end::Script-->
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const slides = document.querySelectorAll(".slide");
+    const dotsContainer = document.querySelector(".slider-dots");
+    const prevBtn = document.querySelector(".prev");
+    const nextBtn = document.querySelector(".next");
+
+    let current = 0;
+    let autoSlide;
+
+    slides.forEach((_, index) => {
+        const dot = document.createElement("div");
+        dot.classList.add("dot");
+        if (index === 0) dot.classList.add("active");
+
+        dot.addEventListener("click", () => {
+            goToSlide(index);
+        });
+
+        dotsContainer.appendChild(dot);
+    });
+
+    const dots = document.querySelectorAll(".dot");
+
+    function updateSlider() {
+        slides.forEach(slide => slide.classList.remove("active"));
+        dots.forEach(dot => dot.classList.remove("active"));
+
+        slides[current].classList.add("active");
+        dots[current].classList.add("active");
+    }
+
+    function goToSlide(index) {
+        current = index;
+        updateSlider();
+        restartAuto();
+    }
+
+    function nextSlide() {
+        current = (current + 1) % slides.length;
+        updateSlider();
+    }
+
+    function prevSlideFunc() {
+        current = (current - 1 + slides.length) % slides.length;
+        updateSlider();
+    }
+
+    function startAuto() {
+        autoSlide = setInterval(nextSlide, 3000);
+    }
+
+    function restartAuto() {
+        clearInterval(autoSlide);
+        startAuto();
+    }
+
+    prevBtn.addEventListener("click", prevSlideFunc);
+    nextBtn.addEventListener("click", nextSlide);
+
+    startAuto();
+});
+</script>
   </body>
   <!--end::Body-->
 </html>
