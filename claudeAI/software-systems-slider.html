@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Software Systems Slider</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+<style>
+  body {
+    background: #15171c;
+    padding: 40px 20px;
+  }
+
+  .card {
+    max-width: 540px;
+    margin: 0 auto;
+    background: #1e2129;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+  }
+
+  .card-header {
+    background: transparent;
+    border-bottom: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 4px;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #e8e9ec;
+  }
+
+  .badge-new {
+    background: #e0364f;
+    color: #fff;
+    border-radius: 14px;
+    padding: 5px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .card-tools .btn {
+    color: #9aa0ab;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 2px 6px;
+  }
+  .card-tools .btn:hover { color: #fff; }
+
+  /* ---- Slider track ---- */
+  .slider-viewport {
+    position: relative;
+    padding: 6px 0 18px;
+  }
+
+  .slider-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    gap: 0;
+    padding: 4px 10px 10px;
+    -webkit-overflow-scrolling: touch;
+    cursor: grab;
+  }
+  .slider-track.dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+  .slider-track::-webkit-scrollbar { height: 5px; }
+  .slider-track::-webkit-scrollbar-thumb {
+    background: #3a3f4a;
+    border-radius: 3px;
+  }
+  .slider-track::-webkit-scrollbar-track { background: transparent; }
+
+  .product-item {
+    flex: 0 0 25%;
+    max-width: 25%;
+    scroll-snap-align: start;
+    text-align: center;
+    padding: 6px 8px;
+    user-select: none;
+  }
+
+  .product-item .icon-wrap {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 8px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 2rem;
+    color: #fff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .product-item .icon-wrap:hover {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 3px rgba(90, 169, 255, 0.35);
+  }
+
+  .product-name {
+    display: block;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #c7cad1;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .product-name:hover { color: #fff; }
+
+  .product-price {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #5aa9ff;
+    margin-top: 2px;
+  }
+
+  /* ---- Nav arrows ---- */
+  .slider-nav {
+    position: absolute;
+    top: 38%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #2a2e37;
+    border: none;
+    color: #d6d8dc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    z-index: 2;
+  }
+  .slider-nav:hover { background: #3a3f4a; color: #fff; }
+  .slider-nav.prev { left: -4px; }
+  .slider-nav.next { right: -4px; }
+  .slider-nav:disabled { opacity: 0.25; pointer-events: none; }
+
+  /* ---- Progress dots ---- */
+  .slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding-bottom: 12px;
+  }
+  .slider-dots .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3a3f4a;
+    transition: background 0.2s ease, width 0.2s ease;
+  }
+  .slider-dots .dot.active {
+    background: #5aa9ff;
+    width: 16px;
+    border-radius: 3px;
+  }
+
+  .card-footer {
+    background: transparent;
+    border-top: 1px solid #2a2e37;
+    text-align: center;
+    padding: 10px;
+  }
+  .card-footer a {
+    color: #5aa9ff;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .card-footer a:hover { text-decoration: underline; }
+
+  /* ---- Demo modal ---- */
+  .demo-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+  }
+  .demo-modal-backdrop.open { display: flex; }
+
+  .demo-modal {
+    background: #1e2129;
+    color: #fff;
+    border-radius: 10px;
+    max-width: 760px;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+  }
+
+  .demo-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #2a2e37;
+    flex-shrink: 0;
+  }
+
+  .demo-modal-header .icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .demo-modal-titles { flex: 1; min-width: 0; }
+  .demo-modal-titles h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .demo-modal-titles .demo-url {
+    font-size: 0.78rem;
+    color: #8a8f99;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .demo-modal-price {
+    color: #5aa9ff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .demo-modal-header button {
+    background: none;
+    border: none;
+    color: #9aa0ab;
+    font-size: 1.3rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .demo-modal-header button:hover { color: #fff; }
+
+  .demo-frame-wrap {
+    position: relative;
+    background: #0c0d10;
+    flex: 1;
+    min-height: 420px;
+  }
+
+  .demo-frame-wrap iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 420px;
+    border: none;
+    display: block;
+  }
+
+  .demo-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #8a8f99;
+    font-size: 0.85rem;
+    background: #0c0d10;
+  }
+  .demo-loading .spinner {
+    width: 26px;
+    height: 26px;
+    border: 3px solid #2a2e37;
+    border-top-color: #5aa9ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .demo-frame-wrap.loaded .demo-loading { display: none; }
+
+  .demo-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid #2a2e37;
+    flex-shrink: 0;
+  }
+  .demo-modal-footer .desc {
+    font-size: 0.8rem;
+    color: #aeb2ba;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .demo-modal-footer a {
+    color: #5aa9ff;
+    font-size: 0.82rem;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .demo-modal-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Software Systems</h3>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge-new">8 Available</span>
+      <div class="card-tools">
+        <button class="btn" id="pauseToggle" title="Pause"><i class="bi bi-pause-fill"></i></button>
+        <button class="btn" title="Close">&times;</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="slider-viewport">
+      <button class="slider-nav prev" aria-label="Previous"><i class="bi bi-chevron-left"></i></button>
+
+      <div class="slider-track" id="sliderTrack">
+        <div class="product-item"
+             data-name="InventoryPro"
+             data-price="$49/mo"
+             data-icon="bi-boxes"
+             data-color="#378ADD"
+             data-url="https://example.com/demo/inventorypro"
+             data-desc="Stock and warehouse management system with real-time tracking.">
+          <div class="icon-wrap" style="background:#378ADD"><i class="bi bi-boxes"></i></div>
+          <a class="product-name" href="#">InventoryPro</a>
+          <div class="product-price">$49/mo</div>
+        </div>
+
+        <div class="product-item"
+             data-name="HelpDesk360"
+             data-price="$29/mo"
+             data-icon="bi-headset"
+             data-color="#1D9E75"
+             data-url="https://example.com/demo/helpdesk360"
+             data-desc="Customer support ticketing system with live chat integration.">
+          <div class="icon-wrap" style="background:#1D9E75"><i class="bi bi-headset"></i></div>
+          <a class="product-name" href="#">HelpDesk360</a>
+          <div class="product-price">$29/mo</div>
+        </div>
+
+        <div class="product-item"
+             data-name="PayFlow"
+             data-price="$79/mo"
+             data-icon="bi-credit-card"
+             data-color="#D85A30"
+             data-url="https://example.com/demo/payflow"
+             data-desc="Payment processing and invoicing platform for small businesses.">
+          <div class="icon-wrap" style="background:#D85A30"><i class="bi bi-credit-card"></i></div>
+          <a class="product-name" href="#">PayFlow</a>
+          <div class="product-price">$79/mo</div>
+        </div>
+
+        <div class="product-item"
+             data-name="HRCore"
+             data-price="$59/mo"
+             data-icon="bi-people"
+             data-color="#BA7517"
+             data-url="https://example.com/demo/hrcore"
+             data-desc="Employee management, payroll, and onboarding system.">
+          <div class="icon-wrap" style="background:#BA7517"><i class="bi bi-people"></i></div>
+          <a class="product-name" href="#">HRCore</a>
+          <div class="product-price">$59/mo</div>
+        </div>
+
+        <div class="product-item"
+             data-name="ProjectHub"
+             data-price="$39/mo"
+             data-icon="bi-kanban"
+             data-color="#534AB7"
+             data-url="https://example.com/demo/projecthub"
+             data-desc="Task and project management board with team collaboration tools.">
+          <div class="icon-wrap" style="background:#534AB7"><i class="bi bi-kanban"></i></div>
+          <a class="product-name" href="#">ProjectHub</a>
+          <div class="product-price">$39/mo</div>
+        </div>
+
+        <div class="product-item"
+             data-name="AnalyticsX"
+             data-price="$89/mo"
+             data-icon="bi-graph-up"
+             data-color="#993556"
+             data-url="https://example.com/demo/analyticsx"
+             data-desc="Business intelligence dashboard with custom report builder.">
+          <div class="icon-wrap" style="background:#993556"><i class="bi bi-graph-up"></i></div>
+          <a class="product-name" href="#">AnalyticsX</a>
+          <div class="product-price">$89/mo</div>
+        </div>
+
+        <div class="product-item"
+             data-name="MailSuite"
+             data-price="$19/mo"
+             data-icon="bi-envelope"
+             data-color="#0F6E56"
+             data-url="https://example.com/demo/mailsuite"
+             data-desc="Email marketing and automation platform with campaign builder.">
+          <div class="icon-wrap" style="background:#0F6E56"><i class="bi bi-envelope"></i></div>
+          <a class="product-name" href="#">MailSuite</a>
+          <div class="product-price">$19/mo</div>
+        </div>
+
+        <div class="product-item"
+             data-name="SecureVault"
+             data-price="$99/mo"
+             data-icon="bi-shield-lock"
+             data-color="#5F5E5A"
+             data-url="https://example.com/demo/securevault"
+             data-desc="Document storage and access control system with audit logging.">
+          <div class="icon-wrap" style="background:#5F5E5A"><i class="bi bi-shield-lock"></i></div>
+          <a class="product-name" href="#">SecureVault</a>
+          <div class="product-price">$99/mo</div>
+        </div>
+      </div>
+
+      <button class="slider-nav next" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
+    </div>
+
+    <div class="slider-dots" id="sliderDots"></div>
+  </div>
+
+  <div class="card-footer">
+    <a href="#">View All Systems</a>
+  </div>
+</div>
+
+<div class="demo-modal-backdrop" id="demoModal">
+  <div class="demo-modal">
+    <div class="demo-modal-header">
+      <div class="icon-wrap" id="modalIconWrap"><i id="modalIcon" class="bi"></i></div>
+      <div class="demo-modal-titles">
+        <h4 id="modalName"></h4>
+        <div class="demo-url" id="modalUrl"></div>
+      </div>
+      <div class="demo-modal-price" id="modalPrice"></div>
+      <button id="modalClose" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="demo-frame-wrap" id="frameWrap">
+      <div class="demo-loading">
+        <div class="spinner"></div>
+        <div>Loading demo&hellip;</div>
+      </div>
+      <iframe id="modalFrame" src="" title="Software demo preview"></iframe>
+    </div>
+
+    <div class="demo-modal-footer">
+      <div class="desc" id="modalDesc"></div>
+      <a id="modalOpenNew" href="#" target="_blank" rel="noopener">Open in new tab <i class="bi bi-box-arrow-up-right"></i></a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const track = document.getElementById('sliderTrack');
+  const prevBtn = document.querySelector('.slider-nav.prev');
+  const nextBtn = document.querySelector('.slider-nav.next');
+  const dotsWrap = document.getElementById('sliderDots');
+  const items = Array.from(track.querySelectorAll('.product-item'));
+  const perPage = 4;
+  const pageCount = Math.ceil(items.length / perPage);
+
+  for (let i = 0; i < pageCount; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    dotsWrap.appendChild(d);
+  }
+  const dots = Array.from(dotsWrap.children);
+
+  function itemWidth() {
+    return items[0].getBoundingClientRect().width;
+  }
+
+  function currentPage() {
+    const max = track.scrollWidth - track.clientWidth - 1;
+    if (track.scrollLeft >= max) return pageCount - 1;
+    return Math.round(track.scrollLeft / (itemWidth() * perPage));
+  }
+
+  function updateUI() {
+    const max = track.scrollWidth - track.clientWidth - 1;
+    prevBtn.disabled = track.scrollLeft <= 0;
+    nextBtn.disabled = track.scrollLeft >= max;
+    const page = currentPage();
+    dots.forEach((d, i) => d.classList.toggle('active', i === page));
+  }
+
+  function goToPage(page) {
+    const max = track.scrollWidth - track.clientWidth;
+    const target = Math.min(page * itemWidth() * perPage, max);
+    track.scrollTo({ left: target, behavior: 'smooth' });
+  }
+
+  prevBtn.addEventListener('click', () => {
+    goToPage(Math.max(currentPage() - 1, 0));
+    restartAuto();
+  });
+  nextBtn.addEventListener('click', () => {
+    goToPage(currentPage() + 1 >= pageCount ? 0 : currentPage() + 1);
+    restartAuto();
+  });
+  dots.forEach((d, i) => d.addEventListener('click', () => { goToPage(i); restartAuto(); }));
+
+  track.addEventListener('scroll', updateUI);
+  window.addEventListener('resize', updateUI);
+
+  let isDown = false, startX = 0, startScroll = 0, dragged = false;
+
+  track.addEventListener('mousedown', (e) => {
+    isDown = true;
+    dragged = false;
+    track.classList.add('dragging');
+    startX = e.pageX;
+    startScroll = track.scrollLeft;
+  });
+  window.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    track.classList.remove('dragging');
+    updateUI();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    if (Math.abs(e.pageX - startX) > 4) dragged = true;
+    track.scrollLeft = startScroll - (e.pageX - startX);
+  });
+
+  /* ---- auto-advance ---- */
+  const AUTO_MS = 3500;
+  let autoTimer = null;
+  let paused = false;
+
+  function tick() {
+    const page = currentPage();
+    goToPage(page + 1 >= pageCount ? 0 : page + 1);
+  }
+  function startAuto() {
+    stopAuto();
+    autoTimer = setInterval(tick, AUTO_MS);
+  }
+  function stopAuto() {
+    if (autoTimer) clearInterval(autoTimer);
+    autoTimer = null;
+  }
+  function restartAuto() {
+    if (!paused) startAuto();
+  }
+
+  const pauseToggle = document.getElementById('pauseToggle');
+  pauseToggle.addEventListener('click', () => {
+    paused = !paused;
+    pauseToggle.innerHTML = paused
+      ? '<i class="bi bi-play-fill"></i>'
+      : '<i class="bi bi-pause-fill"></i>';
+    if (paused) stopAuto(); else startAuto();
+  });
+
+  track.addEventListener('mouseenter', stopAuto);
+  track.addEventListener('mouseleave', restartAuto);
+
+  /* ---- demo modal ---- */
+  const modal = document.getElementById('demoModal');
+  const modalIconWrap = document.getElementById('modalIconWrap');
+  const modalIcon = document.getElementById('modalIcon');
+  const modalName = document.getElementById('modalName');
+  const modalUrl = document.getElementById('modalUrl');
+  const modalPrice = document.getElementById('modalPrice');
+  const modalDesc = document.getElementById('modalDesc');
+  const modalOpenNew = document.getElementById('modalOpenNew');
+  const modalFrame = document.getElementById('modalFrame');
+  const frameWrap = document.getElementById('frameWrap');
+
+  function openModal(item) {
+    const url = item.dataset.url;
+    modalIconWrap.style.background = item.dataset.color;
+    modalIcon.className = 'bi ' + item.dataset.icon;
+    modalName.textContent = item.dataset.name;
+    modalUrl.textContent = url;
+    modalPrice.textContent = item.dataset.price;
+    modalDesc.textContent = item.dataset.desc;
+    modalOpenNew.href = url;
+
+    frameWrap.classList.remove('loaded');
+    modalFrame.src = url;
+    modal.classList.add('open');
+    stopAuto();
+  }
+
+  modalFrame.addEventListener('load', () => {
+    frameWrap.classList.add('loaded');
+  });
+
+  function closeModal() {
+    modal.classList.remove('open');
+    modalFrame.src = 'about:blank';
+    restartAuto();
+  }
+
+  items.forEach((item) => {
+    const iconEl = item.querySelector('.icon-wrap');
+    iconEl.addEventListener('click', () => {
+      if (dragged) return;
+      openModal(item);
+    });
+  });
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+  });
+
+  updateUI();
+  startAuto();
+})();
+</script>
+
+</body>
+</html>
