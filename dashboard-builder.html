@@ -53,6 +53,51 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 #preview-btn:hover{background:#4f51d4;}
 #export-btn{background:#22c55e22;color:var(--success);border-color:#22c55e55;}
 #export-btn:hover{background:#22c55e33;}
+#export-img-btn{background:#818cf822;color:var(--accent2);border-color:#818cf855;}
+#export-img-btn:hover{background:#818cf833;}
+
+/* ── IMAGE EXPORT MODAL ── */
+#img-export-overlay{
+  display:none;position:fixed;inset:0;background:#000c;z-index:2000;
+  align-items:center;justify-content:center;
+}
+#img-export-overlay.show{display:flex;}
+#img-export-modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:24px;max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column;gap:16px;
+}
+#img-export-modal h3{font-size:16px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;}
+#img-preview-wrap{
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  overflow:auto;max-height:55vh;display:flex;align-items:flex-start;justify-content:center;padding:12px;
+}
+#img-preview-wrap img{max-width:100%;border-radius:4px;display:block;}
+.img-export-opts{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.img-export-opts label{font-size:12px;color:var(--muted);}
+.img-export-opts select,.img-export-opts input{
+  padding:5px 8px;background:var(--card);border:1px solid var(--border);
+  border-radius:5px;color:var(--text);font-size:12px;font-family:inherit;outline:none;
+}
+.img-export-opts select:focus,.img-export-opts input:focus{border-color:var(--accent);}
+.img-export-footer{display:flex;gap:8px;justify-content:flex-end;}
+.img-export-footer button{
+  padding:8px 18px;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer;
+  border:1px solid var(--border);transition:all .15s;
+}
+.img-dl-btn{background:var(--accent);color:#fff;border-color:var(--accent)!important;}
+.img-dl-btn:hover{background:#4f51d4;}
+.img-copy-btn{background:transparent;color:var(--muted);}
+.img-copy-btn:hover{background:var(--card);color:var(--text);}
+.img-cancel-btn{background:transparent;color:var(--dim);}
+.img-cancel-btn:hover{background:var(--card);color:var(--text);}
+.capture-progress{
+  font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;
+}
+.capture-progress .spinner{
+  width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .6s linear infinite;display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
 #clear-btn{background:#ef444422;color:var(--danger);border-color:#ef444455;}
 #clear-btn:hover{background:#ef444433;}
 .spacer{flex:1;}
@@ -371,6 +416,7 @@ select.prop-input option{background:var(--card);color:var(--text);}
   <div class="spacer"></div>
   <button class="tb-btn" id="clear-btn"><i class="bi bi-trash"></i> Clear</button>
   <button class="tb-btn" id="export-btn"><i class="bi bi-code-slash"></i> Export HTML</button>
+  <button class="tb-btn" id="export-img-btn"><i class="bi bi-image"></i> Save as Image</button>
   <button class="tb-btn" id="preview-btn"><i class="bi bi-play-fill"></i> Preview</button>
 </div>
 
@@ -475,6 +521,45 @@ select.prop-input option{background:var(--card);color:var(--text);}
 
 <!-- Toast container -->
 <div id="toast-wrap"></div>
+
+<!-- Image Export Modal -->
+<div id="img-export-overlay">
+  <div id="img-export-modal">
+    <h3><i class="bi bi-image" style="color:var(--accent2)"></i> Save Canvas as Image</h3>
+    <div class="img-export-opts">
+      <label>Format</label>
+      <select id="img-format">
+        <option value="png">PNG (lossless)</option>
+        <option value="jpeg">JPEG (smaller size)</option>
+        <option value="webp">WebP (modern)</option>
+      </select>
+      <label>Scale</label>
+      <select id="img-scale">
+        <option value="1">1× (screen)</option>
+        <option value="2" selected>2× (retina)</option>
+        <option value="3">3× (high-res)</option>
+      </select>
+      <label>Background</label>
+      <select id="img-bg">
+        <option value="#0f1117">Dark (default)</option>
+        <option value="#ffffff">White</option>
+        <option value="#f8fafc">Light gray</option>
+        <option value="transparent">Transparent (PNG only)</option>
+      </select>
+      <label>Filename</label>
+      <input id="img-filename" type="text" value="my-app" style="width:110px"/>
+    </div>
+    <div id="img-preview-wrap">
+      <div id="img-capture-status" class="capture-progress"><span class="spinner"></span> Rendering canvas…</div>
+      <img id="img-preview" src="" alt="Preview" style="display:none"/>
+    </div>
+    <div class="img-export-footer">
+      <button class="img-cancel-btn" onclick="closeImgExport()">Cancel</button>
+      <button class="img-copy-btn" id="img-copy-btn" disabled><i class="bi bi-clipboard"></i> Copy to clipboard</button>
+      <button class="img-dl-btn" id="img-dl-btn" disabled><i class="bi bi-download"></i> Download image</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
@@ -1024,6 +1109,121 @@ document.getElementById('comp-search').addEventListener('input',function(){
 
 // ── KEYBOARD SHORTCUTS DISPLAY ──
 toast('Welcome to WebCraft! Drag components to build your app.','');
+
+// ── EXPORT AS IMAGE ──
+let capturedDataUrl = null;
+
+async function openImgExport(){
+  if(!elements.length){toast('Add some elements first','');return;}
+  // Deselect so no blue border shows
+  selectEl(null);
+  document.getElementById('img-export-overlay').classList.add('show');
+  document.getElementById('img-preview').style.display='none';
+  document.getElementById('img-capture-status').style.display='flex';
+  document.getElementById('img-dl-btn').disabled=true;
+  document.getElementById('img-copy-btn').disabled=true;
+  capturedDataUrl=null;
+  await captureCanvas();
+}
+
+async function captureCanvas(){
+  const fmt=document.getElementById('img-format').value;
+  const scale=parseInt(document.getElementById('img-scale').value)||2;
+  const bg=document.getElementById('img-bg').value;
+  const transparent=bg==='transparent';
+
+  // Compute bounding box of all elements
+  let minX=Infinity,minY=Infinity,maxX=0,maxY=0;
+  elements.forEach(el=>{
+    minX=Math.min(minX,el.x); minY=Math.min(minY,el.y);
+    maxX=Math.max(maxX,el.x+el.w); maxY=Math.max(maxY,el.y+el.h);
+  });
+  const pad=32;
+  minX=Math.max(0,minX-pad); minY=Math.max(0,minY-pad);
+  maxX+=pad; maxY+=pad;
+  const W=maxX-minX, H=maxY-minY;
+
+  try{
+    const h2c=window.html2canvas;
+    if(!h2c){toast('html2canvas not loaded yet — try again','danger');return;}
+
+    const cvs=await h2c(document.getElementById('canvas'),{
+      backgroundColor:transparent?null:(bg||'#0f1117'),
+      scale,
+      x:minX, y:minY, width:W, height:H,
+      useCORS:true,
+      allowTaint:true,
+      logging:false,
+      ignoreElements:el=>el.classList&&(el.classList.contains('el-toolbar')||el.classList.contains('resize-handle')||el.id==='drop-hint'||el.id==='drop-indicator')
+    });
+
+    const mimeMap={png:'image/png',jpeg:'image/jpeg',webp:'image/webp'};
+    const quality=fmt==='jpeg'?0.92:fmt==='webp'?0.92:1.0;
+    capturedDataUrl=cvs.toDataURL(mimeMap[fmt]||'image/png',quality);
+
+    const preview=document.getElementById('img-preview');
+    preview.src=capturedDataUrl;
+    preview.style.display='block';
+    document.getElementById('img-capture-status').style.display='none';
+    document.getElementById('img-dl-btn').disabled=false;
+    document.getElementById('img-copy-btn').disabled=false;
+  } catch(err){
+    document.getElementById('img-capture-status').innerHTML='<span style="color:var(--danger)"><i class="bi bi-exclamation-triangle"></i> Capture failed: '+err.message+'</span>';
+    console.error(err);
+  }
+}
+
+function downloadImage(){
+  if(!capturedDataUrl)return;
+  const fmt=document.getElementById('img-format').value;
+  const name=(document.getElementById('img-filename').value||'my-app')+'.'+fmt;
+  const a=document.createElement('a');
+  a.href=capturedDataUrl; a.download=name; a.click();
+  toast('Image saved as '+name,'success');
+}
+
+async function copyImageToClipboard(){
+  if(!capturedDataUrl){return;}
+  try{
+    const res=await fetch(capturedDataUrl);
+    const blob=await res.blob();
+    await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
+    toast('Image copied to clipboard!','success');
+  } catch(e){
+    // Fallback: open in new tab
+    const w=window.open();
+    w.document.write('<img src="'+capturedDataUrl+'" style="max-width:100%"/>');
+    toast('Opened in new tab — right-click to save','');
+  }
+}
+
+function closeImgExport(){
+  document.getElementById('img-export-overlay').classList.remove('show');
+  capturedDataUrl=null;
+}
+
+document.getElementById('export-img-btn').onclick=openImgExport;
+document.getElementById('img-dl-btn').onclick=downloadImage;
+document.getElementById('img-copy-btn').onclick=copyImageToClipboard;
+document.getElementById('img-export-overlay').addEventListener('mousedown',e=>{
+  if(e.target===document.getElementById('img-export-overlay'))closeImgExport();
+});
+
+// Re-capture when options change
+['img-format','img-scale','img-bg'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    if(document.getElementById('img-export-overlay').classList.contains('show')){
+      document.getElementById('img-preview').style.display='none';
+      document.getElementById('img-capture-status').style.display='flex';
+      document.getElementById('img-capture-status').innerHTML='<span class="spinner"></span> Re-rendering…';
+      document.getElementById('img-dl-btn').disabled=true;
+      document.getElementById('img-copy-btn').disabled=true;
+      capturedDataUrl=null;
+      captureCanvas();
+    }
+  });
+});
 </script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
