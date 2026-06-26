@@ -1,0 +1,1654 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>Software Store – Page Builder</title>
+
+  <!-- Theme init (prevents flash) -->
+  <script>
+    (() => {
+      'use strict';
+      const STORAGE_KEY = 'lte-theme';
+      let stored = null;
+      try { stored = localStorage.getItem(STORAGE_KEY); } catch {}
+      const prefersDark = globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
+      let resolved = (stored === 'dark' || stored === 'light') ? stored : (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-bs-theme', resolved);
+      document.documentElement.style.colorScheme = resolved;
+    })();
+  </script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
+  <meta name="color-scheme" content="light dark"/>
+
+  <!-- Fonts -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
+    integrity="sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q=" crossorigin="anonymous"
+    media="print" onload="this.media='all'"/>
+
+  <!-- OverlayScrollbars -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/styles/overlayscrollbars.min.css" crossorigin="anonymous"/>
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous"/>
+
+  <!-- AdminLTE -->
+  <link rel="stylesheet" href="./css/adminlte.css"/>
+
+  <!-- ApexCharts (kept for potential future use) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"
+    integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0=" crossorigin="anonymous"/>
+
+  <style>
+    /* ── RESET & TOKENS ── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --wc-bg:      #0f1117;
+      --wc-surface: #181c27;
+      --wc-card:    #1e2336;
+      --wc-border:  #2a3050;
+      --wc-border2: #374060;
+      --wc-accent:  #6366f1;
+      --wc-accent2: #818cf8;
+      --wc-text:    #e2e8f0;
+      --wc-muted:   #8892a4;
+      --wc-dim:     #4a5568;
+      --wc-danger:  #ef4444;
+      --wc-success: #22c55e;
+      --wc-warn:    #f59e0b;
+      --wc-radius:  8px;
+
+      /* Layout dims — recalculated for AdminLTE context */
+      --lte-navbar-h: 57px;    /* AdminLTE top navbar */
+      --wc-toolbar-h: 52px;    /* WebCraft toolbar */
+      --wc-sidebar-w: 260px;   /* WebCraft components sidebar */
+      --lte-sidebar-w: 0px;    /* AdminLTE sidebar (hidden in builder) */
+    }
+
+    /* ── Hide AdminLTE sidebar in builder mode so it doesn't fight WebCraft ── */
+    body.builder-active .app-sidebar {
+      display: none !important;
+    }
+    body.builder-active .app-wrapper {
+      padding-left: 0 !important;
+    }
+    /* Prevent AdminLTE's app-main from adding unwanted scroll context */
+    body.builder-active .app-main {
+      overflow: hidden;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    body.builder-active .app-wrapper {
+      overflow: hidden;
+    }
+
+    /* ── WEBCRAFT TOOLBAR ── */
+    #wc-toolbar {
+      height: var(--wc-toolbar-h);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      background: var(--wc-surface);
+      border-bottom: 1px solid var(--wc-border);
+      position: fixed;
+      /* sits below AdminLTE top navbar */
+      top: var(--lte-navbar-h);
+      left: 0;
+      right: 0;
+      z-index: 150;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    #wc-toolbar::-webkit-scrollbar { height: 3px; }
+    #wc-toolbar::-webkit-scrollbar-thumb { background: var(--wc-border2); border-radius: 2px; }
+
+    #wc-toolbar .brand {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.4px;
+      color: #fff;
+      margin-right: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #wc-toolbar .brand span { color: var(--wc-accent2); }
+
+    .tb-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--wc-border);
+      background: transparent;
+      color: var(--wc-muted);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tb-btn:hover { background: var(--wc-card); color: var(--wc-text); border-color: var(--wc-border2); }
+    .tb-btn.active { background: var(--wc-accent); color: #fff; border-color: var(--wc-accent); }
+    .tb-btn i { font-size: 14px; }
+    .tb-sep { width: 1px; height: 22px; background: var(--wc-border); margin: 0 2px; flex-shrink: 0; }
+    #undo-btn, #redo-btn { padding: 5px 9px; }
+    #preview-btn { background: var(--wc-accent); color: #fff; border-color: var(--wc-accent); }
+    #preview-btn:hover { background: #4f51d4; }
+    #export-btn { background: #22c55e22; color: var(--wc-success); border-color: #22c55e55; display:none;}
+    #export-btn:hover { background: #22c55e33; }
+    #export-img-btn { background: #818cf822; color: var(--wc-accent2); border-color: #818cf855; }
+    #export-img-btn:hover { background: #818cf833; }
+    #clear-btn { background: #ef444422; color: var(--wc-danger); border-color: #ef444455; }
+    #clear-btn:hover { background: #ef444433; }
+    .tb-spacer { flex: 1; min-width: 8px; }
+
+    /* ── WEBCRAFT SIDEBAR ── */
+    #wc-sidebar {
+      width: var(--wc-sidebar-w);
+      position: fixed;
+      top: calc(var(--lte-navbar-h) + var(--wc-toolbar-h));
+      bottom: 0;
+      left: 0;
+      background: var(--wc-surface);
+      border-right: 1px solid var(--wc-border);
+      display: flex;
+      flex-direction: column;
+      z-index: 120;
+      overflow: hidden;
+      transition: transform .25s ease;
+    }
+
+    .sidebar-header-wc {
+      padding: 10px 14px 6px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--wc-dim);
+      flex-shrink: 0;
+    }
+    .comp-search {
+      margin: 0 10px 6px;
+      padding: 6px 10px;
+      background: var(--wc-card);
+      border: 1px solid var(--wc-border);
+      border-radius: 6px;
+      color: var(--wc-text);
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      width: calc(100% - 20px);
+      flex-shrink: 0;
+    }
+    .comp-search::placeholder { color: var(--wc-dim); }
+    .comp-search:focus { border-color: var(--wc-accent); }
+
+    #component-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 8px 10px;
+    }
+    #component-list::-webkit-scrollbar { width: 4px; }
+    #component-list::-webkit-scrollbar-thumb { background: var(--wc-border2); border-radius: 4px; }
+
+    .comp-group { margin-bottom: 10px; }
+    .comp-group-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--wc-dim);
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      padding: 5px 6px 3px;
+    }
+    .comp-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 9px;
+      border-radius: 6px;
+      cursor: grab;
+      border: 1px solid transparent;
+      margin-bottom: 2px;
+      transition: all .12s;
+      user-select: none;
+      font-size: 12px;
+    }
+    .comp-item:hover { background: var(--wc-card); border-color: var(--wc-border); }
+    .comp-item:active { cursor: grabbing; opacity: .7; }
+    .comp-item i { font-size: 16px; width: 18px; text-align: center; color: var(--wc-accent2); }
+    .comp-item .comp-name { color: var(--wc-text); }
+    .comp-item .comp-desc { font-size: 10px; color: var(--wc-muted); }
+
+    /* Props panel */
+    #props-panel {
+      border-top: 1px solid var(--wc-border);
+      padding: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      background: var(--wc-surface);
+      flex-shrink: 0;
+    }
+    #props-panel::-webkit-scrollbar { width: 4px; }
+    #props-panel::-webkit-scrollbar-thumb { background: var(--wc-border2); border-radius: 4px; }
+    .props-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--wc-dim);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 8px;
+    }
+    .prop-row { margin-bottom: 8px; }
+    .prop-label { font-size: 11px; color: var(--wc-muted); margin-bottom: 3px; display: block; }
+    .prop-input {
+      width: 100%;
+      padding: 5px 8px;
+      background: var(--wc-card);
+      border: 1px solid var(--wc-border);
+      border-radius: 5px;
+      color: var(--wc-text);
+      font-size: 11px;
+      font-family: inherit;
+      outline: none;
+    }
+    .prop-input:focus { border-color: var(--wc-accent); }
+    .prop-input[type=color] { height: 28px; padding: 2px 4px; cursor: pointer; }
+    .prop-btn {
+      width: 100%;
+      padding: 6px;
+      background: var(--wc-accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s;
+      margin-top: 3px;
+    }
+    .prop-btn:hover { background: #4f51d4; }
+    .prop-btn.danger { background: var(--wc-danger); }
+    .prop-btn.danger:hover { background: #dc2626; }
+    .prop-btn.ghost {
+      background: transparent;
+      border: 1px solid var(--wc-border);
+      color: var(--wc-muted);
+    }
+    .prop-btn.ghost:hover { background: var(--wc-card); color: var(--wc-text); }
+    #no-sel { font-size: 11px; color: var(--wc-dim); text-align: center; padding: 14px 0; }
+
+    select.prop-input option { background: var(--wc-card); color: var(--wc-text); }
+
+    /* ── CANVAS ── */
+    #canvas-wrap {
+      position: fixed;
+      top: calc(var(--lte-navbar-h) + var(--wc-toolbar-h));
+      left: var(--wc-sidebar-w);
+      right: 0;
+      bottom: 0;
+      overflow: auto;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 31px, var(--wc-border) 31px, var(--wc-border) 32px),
+        repeating-linear-gradient(90deg, transparent, transparent 31px, var(--wc-border) 31px, var(--wc-border) 32px);
+      background-color: var(--wc-bg);
+    }
+    #wc-canvas {
+      min-width: 900px;
+      min-height: 700px;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .canvas-drop-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: var(--wc-dim);
+      pointer-events: none;
+    }
+    .canvas-drop-hint i { font-size: 52px; display: block; margin-bottom: 10px; color: var(--wc-border2); }
+    .canvas-drop-hint p { font-size: 13px; }
+    .canvas-drop-hint small { font-size: 11px; color: var(--wc-dim); opacity: .6; }
+
+    /* ── CANVAS ELEMENTS ── */
+    .canvas-el {
+      position: absolute;
+      cursor: move;
+      user-select: none;
+      border: 2px solid transparent;
+      border-radius: var(--wc-radius);
+      transition: border-color .12s;
+      min-width: 80px;
+      min-height: 30px;
+    }
+    .canvas-el:hover { border-color: var(--wc-border2); }
+    .canvas-el.selected { border-color: var(--wc-accent) !important; z-index: 50; }
+    .resize-handle {
+      position: absolute;
+      bottom: -5px;
+      right: -5px;
+      width: 12px;
+      height: 12px;
+      background: var(--wc-accent);
+      border-radius: 3px;
+      cursor: se-resize;
+      z-index: 10;
+      display: none;
+    }
+    .canvas-el.selected .resize-handle { display: block; }
+    .el-toolbar {
+      position: absolute;
+      top: -34px;
+      left: 0;
+      display: none;
+      background: var(--wc-card);
+      border: 1px solid var(--wc-border);
+      border-radius: 6px;
+      padding: 3px 4px;
+      gap: 2px;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    .canvas-el.selected .el-toolbar { display: flex; }
+    .el-tb-btn {
+      padding: 4px 7px;
+      border: none;
+      background: transparent;
+      color: var(--wc-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all .1s;
+    }
+    .el-tb-btn:hover { background: var(--wc-border); color: var(--wc-text); }
+    .el-tb-btn.danger:hover { background: #ef444433; color: var(--wc-danger); }
+
+    /* ── ELEMENT STYLES ── */
+    .el-container {
+      background: var(--wc-card);
+      border: 1px solid var(--wc-border);
+      border-radius: var(--wc-radius);
+      padding: 12px;
+      min-height: 80px;
+    }
+    .el-text { color: var(--wc-text); font-size: 13px; line-height: 1.6; padding: 4px; }
+    .el-heading { color: #fff; font-weight: 700; font-size: 22px; padding: 4px; }
+    .el-btn-primary {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 18px; background: var(--wc-accent); color: #fff; border: none;
+      border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer;
+      font-weight: 500; gap: 5px;
+    }
+    .el-btn-primary:hover { background: #4f51d4; }
+    .el-btn-secondary {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 18px; background: transparent; color: var(--wc-text);
+      border: 1px solid var(--wc-border2); border-radius: 6px; font-size: 13px;
+      font-family: inherit; cursor: pointer; font-weight: 500; gap: 5px;
+    }
+    .el-btn-secondary:hover { background: var(--wc-card); }
+    .el-btn-danger {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 18px; background: var(--wc-danger); color: #fff; border: none;
+      border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer; font-weight: 500;
+    }
+    .el-input {
+      width: 100%; padding: 7px 11px; background: var(--wc-card); border: 1px solid var(--wc-border);
+      border-radius: 6px; color: var(--wc-text); font-size: 13px; font-family: inherit; outline: none;
+    }
+    .el-input:focus { border-color: var(--wc-accent); }
+    .el-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+    .el-badge.badge-success { background: #22c55e22; color: var(--wc-success); }
+    .el-badge.badge-warn    { background: #f59e0b22; color: var(--wc-warn); }
+    .el-badge.badge-danger  { background: #ef444422; color: var(--wc-danger); }
+    .el-badge.badge-accent  { background: #6366f122; color: var(--wc-accent2); }
+    .el-progress .bar-track { background: var(--wc-border); border-radius: 4px; height: 8px; overflow: hidden; }
+    .el-progress .bar-fill  { height: 100%; background: var(--wc-accent); border-radius: 4px; transition: width .4s; }
+    .el-progress .bar-label { font-size: 11px; color: var(--wc-muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .el-divider { border: none; border-top: 1px solid var(--wc-border); width: 100%; margin: 8px 0; }
+    .el-alert { padding: 9px 13px; border-radius: 6px; font-size: 12px; }
+    .el-alert.alert-info    { background: #6366f122; border-left: 3px solid var(--wc-accent); color: var(--wc-accent2); }
+    .el-alert.alert-success { background: #22c55e22; border-left: 3px solid var(--wc-success); color: var(--wc-success); }
+    .el-alert.alert-warn    { background: #f59e0b22; border-left: 3px solid var(--wc-warn);    color: var(--wc-warn); }
+    .el-alert.alert-danger  { background: #ef444422; border-left: 3px solid var(--wc-danger);  color: var(--wc-danger); }
+    .el-card { background: var(--wc-card); border: 1px solid var(--wc-border); border-radius: 10px; padding: 14px; }
+    .el-card .card-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 5px; }
+    .el-card .card-body  { font-size: 12px; color: var(--wc-muted); line-height: 1.6; }
+    .el-stat-card { background: var(--wc-card); border: 1px solid var(--wc-border); border-radius: 10px; padding: 14px; text-align: center; }
+    .el-stat-card .stat-value { font-size: 28px; font-weight: 700; color: #fff; }
+    .el-stat-card .stat-label { font-size: 11px; color: var(--wc-muted); margin-top: 3px; }
+    .el-stat-card .stat-trend { font-size: 11px; margin-top: 3px; }
+    .el-stat-card .stat-trend.up   { color: var(--wc-success); }
+    .el-stat-card .stat-trend.down { color: var(--wc-danger); }
+    .el-image { background: var(--wc-card); border: 1px dashed var(--wc-border2); border-radius: 6px; overflow: hidden; min-width: 120px; min-height: 80px; }
+    .el-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }
+    .el-table-wrap { overflow-x: auto; }
+    .el-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .el-table thead th {
+      background: var(--wc-bg); color: var(--wc-muted); font-weight: 600;
+      padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--wc-border);
+      font-size: 10px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .el-table tbody tr { border-bottom: 1px solid var(--wc-border); transition: background .1s; }
+    .el-table tbody tr:hover { background: var(--wc-card); }
+    .el-table tbody td { padding: 8px 10px; color: var(--wc-text); outline: none; }
+    .el-table tbody td[contenteditable=true]:focus { background: #6366f115; border-bottom: 1px solid var(--wc-accent); }
+    .el-table-add-row {
+      width: 100%; padding: 6px; background: transparent; border: 1px dashed var(--wc-border2);
+      color: var(--wc-dim); border-radius: 0 0 6px 6px; cursor: pointer; font-size: 11px;
+      font-family: inherit; transition: all .15s;
+    }
+    .el-table-add-row:hover { background: var(--wc-card); color: var(--wc-text); }
+    .el-modal-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 8px 16px; background: var(--wc-surface); color: var(--wc-accent2);
+      border: 1px solid var(--wc-accent); border-radius: 6px; font-size: 13px;
+      font-family: inherit; cursor: pointer; font-weight: 500;
+    }
+    .el-modal-btn:hover { background: #6366f122; }
+    .el-navbar {
+      background: var(--wc-card); border: 1px solid var(--wc-border); border-radius: 8px;
+      padding: 9px 14px; display: flex; align-items: center; gap: 14px;
+    }
+    .el-navbar .nav-brand { font-weight: 700; font-size: 14px; color: #fff; }
+    .el-navbar .nav-links { display: flex; gap: 10px; }
+    .el-navbar .nav-link  { font-size: 12px; color: var(--wc-muted); cursor: pointer; }
+    .el-navbar .nav-link:hover { color: var(--wc-text); }
+    .el-navbar .ms-auto { margin-left: auto; }
+    .el-select {
+      width: 100%; padding: 7px 11px; background: var(--wc-card); border: 1px solid var(--wc-border);
+      border-radius: 6px; color: var(--wc-text); font-size: 13px; font-family: inherit; outline: none; cursor: pointer;
+    }
+    .el-chart-placeholder {
+      background: var(--wc-card); border: 1px solid var(--wc-border); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      gap: 7px; color: var(--wc-dim); font-size: 12px;
+    }
+    .el-chart-placeholder i { font-size: 32px; color: var(--wc-border2); }
+
+    /* ── PREVIEW MODE ── */
+    body.preview-mode #wc-sidebar,
+    body.preview-mode #wc-toolbar,
+    body.preview-mode .app-header { display: none !important; }
+    body.preview-mode #canvas-wrap {
+      left: 0 !important;
+      top: 0 !important;
+    }
+    body.preview-mode .canvas-el { cursor: default; border-color: transparent !important; }
+    body.preview-mode .canvas-el.selected { border-color: transparent !important; }
+    body.preview-mode .el-toolbar,
+    body.preview-mode .resize-handle { display: none !important; }
+
+    #preview-bar {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: var(--wc-accent);
+      color: #fff;
+      padding: 7px 14px;
+      font-size: 12px;
+      align-items: center;
+      gap: 10px;
+    }
+    body.preview-mode #preview-bar { display: flex; }
+
+    /* ── MODAL OVERLAY ── */
+    #wc-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000a;
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    #wc-modal-overlay.show { display: flex; }
+    .app-modal-wc {
+      background: var(--wc-surface);
+      border: 1px solid var(--wc-border);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-header-wc { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+    .modal-header-wc h3 { font-size: 16px; font-weight: 600; color: #fff; }
+    .modal-close-wc { background: none; border: none; color: var(--wc-muted); font-size: 18px; cursor: pointer; padding: 0; line-height: 1; }
+    .modal-close-wc:hover { color: var(--wc-text); }
+    .modal-body-wc { font-size: 13px; color: var(--wc-muted); line-height: 1.6; }
+    .modal-footer-wc { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+    .modal-footer-wc button { padding: 7px 18px; border-radius: 6px; font-size: 12px; font-family: inherit; cursor: pointer; border: 1px solid var(--wc-border); }
+    .modal-footer-wc .btn-primary-wc   { background: var(--wc-accent); color: #fff; border-color: var(--wc-accent); }
+    .modal-footer-wc .btn-secondary-wc { background: transparent; color: var(--wc-muted); }
+
+    /* ── CONTEXT MENU ── */
+    #ctx-menu {
+      display: none;
+      position: fixed;
+      background: var(--wc-card);
+      border: 1px solid var(--wc-border);
+      border-radius: 8px;
+      padding: 4px;
+      z-index: 5000;
+      min-width: 155px;
+      box-shadow: 0 8px 24px #0006;
+    }
+    .ctx-item {
+      padding: 6px 11px;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--wc-text);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .ctx-item:hover { background: var(--wc-border); }
+    .ctx-item.danger { color: var(--wc-danger); }
+    .ctx-sep { height: 1px; background: var(--wc-border); margin: 3px 0; }
+
+    /* ── TOAST ── */
+    #toast-wrap {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .toast-item {
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--wc-card);
+      border: 1px solid var(--wc-border);
+      color: var(--wc-text);
+      animation: slideIn .2s ease;
+    }
+    .toast-item.success { border-color: var(--wc-success); color: var(--wc-success); }
+    .toast-item.danger  { border-color: var(--wc-danger);  color: var(--wc-danger); }
+    @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    /* ── IMAGE EXPORT MODAL ── */
+    #img-export-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000c;
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+    #img-export-overlay.show { display: flex; }
+    #img-export-modal {
+      background: var(--wc-surface);
+      border: 1px solid var(--wc-border);
+      border-radius: 14px;
+      padding: 22px;
+      max-width: 660px;
+      width: 95%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    #img-export-modal h3 { font-size: 15px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 7px; }
+    #img-preview-wrap {
+      background: var(--wc-bg);
+      border: 1px solid var(--wc-border);
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 50vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 10px;
+    }
+    #img-preview-wrap img { max-width: 100%; border-radius: 4px; display: block; }
+    .img-export-opts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .img-export-opts label { font-size: 11px; color: var(--wc-muted); }
+    .img-export-opts select,
+    .img-export-opts input {
+      padding: 4px 7px;
+      background: var(--wc-card);
+      border: 1px solid var(--wc-border);
+      border-radius: 5px;
+      color: var(--wc-text);
+      font-size: 11px;
+      font-family: inherit;
+      outline: none;
+    }
+    .img-export-opts select:focus,
+    .img-export-opts input:focus { border-color: var(--wc-accent); }
+    .img-export-footer { display: flex; gap: 8px; justify-content: flex-end; }
+    .img-export-footer button {
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid var(--wc-border);
+      transition: all .15s;
+    }
+    .img-dl-btn   { background: var(--wc-accent); color: #fff; border-color: var(--wc-accent) !important; }
+    .img-dl-btn:hover   { background: #4f51d4; }
+    .img-copy-btn { background: transparent; color: var(--wc-muted); }
+    .img-copy-btn:hover { background: var(--wc-card); color: var(--wc-text); }
+    .img-cancel-btn { background: transparent; color: var(--wc-dim); }
+    .img-cancel-btn:hover { background: var(--wc-card); color: var(--wc-text); }
+    .capture-progress { font-size: 11px; color: var(--wc-muted); display: flex; align-items: center; gap: 7px; }
+    .capture-progress .spinner {
+      width: 13px; height: 13px;
+      border: 2px solid var(--wc-border2);
+      border-top-color: var(--wc-accent);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESPONSIVE: mobile / tablet ── */
+    /* Sidebar toggle button (mobile only) */
+    #wc-sidebar-toggle {
+      display: none;
+      padding: 5px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--wc-border);
+      background: transparent;
+      color: var(--wc-muted);
+      font-size: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #wc-sidebar-toggle:hover { background: var(--wc-card); color: var(--wc-text); }
+
+    /* Sidebar backdrop */
+    #wc-sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000a;
+      z-index: 115;
+    }
+    #wc-sidebar-backdrop.show { display: block; }
+
+    @media (max-width: 991px) {
+      /* AdminLTE navbar height can vary; keep consistent */
+      :root { --lte-navbar-h: 57px; }
+
+      #wc-sidebar-toggle { display: flex; align-items: center; }
+
+      #wc-sidebar {
+        transform: translateX(-100%);
+        z-index: 130;
+        width: min(var(--wc-sidebar-w), 85vw);
+      }
+      #wc-sidebar.open { transform: translateX(0); }
+
+      #canvas-wrap {
+        left: 0 !important;
+      }
+
+      /* Compact toolbar labels */
+      .tb-btn .tb-label { display: none; }
+      #export-btn .tb-label,
+      #preview-btn .tb-label { display: inline; }
+    }
+
+    @media (max-width: 600px) {
+      #wc-toolbar .brand { font-size: 13px; }
+      .tb-btn { padding: 5px 7px; font-size: 11px; }
+      #export-btn .tb-label,
+      #export-img-btn .tb-label { display: none; }
+    }
+  </style>
+</head>
+
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary builder-active">
+<div class="app-wrapper">
+
+  <!-- ── AdminLTE Top Navbar ── -->
+  <nav class="app-header navbar navbar-expand bg-body">
+    <div class="container-fluid">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="./index.html">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
+            Back to Dashboard
+          </a>
+        </li>
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="#" data-lte-toggle="fullscreen">
+            <i data-lte-icon="maximize" class="bi bi-arrows-fullscreen"></i>
+            <i data-lte-icon="minimize" class="bi bi-fullscreen-exit d-none"></i>
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link" href="#" id="bd-theme" aria-label="Toggle color scheme"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-sun-fill" data-lte-theme-icon="light"></i>
+            <i class="bi bi-moon-fill d-none" data-lte-theme-icon="dark"></i>
+            <i class="bi bi-circle-half d-none" data-lte-theme-icon="auto"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme" style="--bs-dropdown-min-width:8rem">
+            <li>
+              <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light" aria-pressed="false">
+                <i class="bi bi-sun-fill me-2"></i> Light <i class="bi bi-check-lg ms-auto d-none"></i>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark" aria-pressed="false">
+                <i class="bi bi-moon-fill me-2"></i> Dark <i class="bi bi-check-lg ms-auto d-none"></i>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="auto" aria-pressed="true">
+                <i class="bi bi-circle-half me-2"></i> Auto <i class="bi bi-check-lg ms-auto d-none"></i>
+              </button>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <!-- ── /AdminLTE Navbar ── -->
+
+  <!-- AdminLTE sidebar hidden via CSS (.builder-active) — no markup needed -->
+
+  <main class="app-main">
+
+    <!-- ── WebCraft Toolbar ── -->
+    <div id="wc-toolbar">
+      <button id="wc-sidebar-toggle" aria-label="Toggle components panel"><i class="bi bi-layout-sidebar-inset"></i></button>
+      <div class="brand">Website<span>Craft</span></div>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="undo-btn" title="Undo (Ctrl+Z)"><i class="bi bi-arrow-counterclockwise"></i></button>
+      <button class="tb-btn" id="redo-btn" title="Redo (Ctrl+Y)"><i class="bi bi-arrow-clockwise"></i></button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="grid-btn"><i class="bi bi-grid-3x3"></i> <span class="tb-label">Grid</span></button>
+      <button class="tb-btn" id="snap-btn"><i class="bi bi-magnet"></i> <span class="tb-label">Snap</span></button>
+      <div class="tb-spacer"></div>
+      <button class="tb-btn" id="clear-btn"><i class="bi bi-trash"></i> <span class="tb-label">Clear</span></button>
+      <button class="tb-btn"  id="export-btn"><i class="bi bi-code-slash"></i> <span class="tb-label">Export HTML</span></button>
+      <button class="tb-btn" id="export-img-btn"><i class="bi bi-image"></i> <span class="tb-label">Image</span></button>
+      <button class="tb-btn" id="preview-btn"><i class="bi bi-play-fill"></i> <span class="tb-label">Preview</span></button>
+    </div>
+
+    <!-- Preview bar (shown only in preview mode) -->
+    <div id="preview-bar">
+      <i class="bi bi-eye-fill"></i> Preview Mode
+      <button onclick="exitPreview()" style="margin-left:auto;background:#fff3;border:1px solid #fff5;color:#fff;padding:3px 11px;border-radius:5px;cursor:pointer;font-size:11px;font-family:inherit;">← Exit Preview</button>
+    </div>
+
+    <!-- Mobile sidebar backdrop -->
+    <div id="wc-sidebar-backdrop"></div>
+
+    <!-- ── WebCraft Sidebar ── -->
+    <div id="wc-sidebar">
+      <div class="sidebar-header-wc">Components</div>
+      <input class="comp-search" id="comp-search" placeholder="Search components…" type="search"/>
+      <div id="component-list">
+        <div class="comp-group">
+          <div class="comp-group-label">Layout</div>
+          <div class="comp-item" draggable="true" data-type="container"><i class="bi bi-square-fill" style="color:#374060"></i><div><div class="comp-name">Container</div><div class="comp-desc">Box / card wrapper</div></div></div>
+          <div class="comp-item" draggable="true" data-type="navbar"><i class="bi bi-layout-text-sidebar" style="color:#818cf8"></i><div><div class="comp-name">Navbar</div><div class="comp-desc">Navigation bar</div></div></div>
+          <div class="comp-item" draggable="true" data-type="divider"><i class="bi bi-dash-lg" style="color:#4a5568"></i><div><div class="comp-name">Divider</div><div class="comp-desc">Horizontal rule</div></div></div>
+        </div>
+        <div class="comp-group">
+          <div class="comp-group-label">Typography</div>
+          <div class="comp-item" draggable="true" data-type="heading"><i class="bi bi-type-h1" style="color:#fff"></i><div><div class="comp-name">Heading</div><div class="comp-desc">H1 – H4 text</div></div></div>
+          <div class="comp-item" draggable="true" data-type="text"><i class="bi bi-paragraph" style="color:#8892a4"></i><div><div class="comp-name">Text Block</div><div class="comp-desc">Body paragraph</div></div></div>
+        </div>
+        <div class="comp-group">
+          <div class="comp-group-label">Controls</div>
+          <div class="comp-item" draggable="true" data-type="btn-primary"><i class="bi bi-capsule" style="color:#6366f1"></i><div><div class="comp-name">Primary Button</div><div class="comp-desc">Filled CTA</div></div></div>
+          <div class="comp-item" draggable="true" data-type="btn-secondary"><i class="bi bi-capsule" style="color:#8892a4"></i><div><div class="comp-name">Secondary Button</div><div class="comp-desc">Outlined button</div></div></div>
+          <div class="comp-item" draggable="true" data-type="btn-danger"><i class="bi bi-capsule" style="color:#ef4444"></i><div><div class="comp-name">Danger Button</div><div class="comp-desc">Destructive action</div></div></div>
+          <div class="comp-item" draggable="true" data-type="modal-trigger"><i class="bi bi-window" style="color:#818cf8"></i><div><div class="comp-name">Modal Button</div><div class="comp-desc">Opens a dialog</div></div></div>
+          <div class="comp-item" draggable="true" data-type="input"><i class="bi bi-input-cursor-text" style="color:#22c55e"></i><div><div class="comp-name">Text Input</div><div class="comp-desc">Text field</div></div></div>
+          <div class="comp-item" draggable="true" data-type="select"><i class="bi bi-chevron-bar-expand" style="color:#f59e0b"></i><div><div class="comp-name">Select</div><div class="comp-desc">Dropdown list</div></div></div>
+        </div>
+        <div class="comp-group">
+          <div class="comp-group-label">Data</div>
+          <div class="comp-item" draggable="true" data-type="table"><i class="bi bi-table" style="color:#22c55e"></i><div><div class="comp-name">Data Table</div><div class="comp-desc">Editable rows/cols</div></div></div>
+          <div class="comp-item" draggable="true" data-type="stat-card"><i class="bi bi-bar-chart-fill" style="color:#6366f1"></i><div><div class="comp-name">Stat Card</div><div class="comp-desc">KPI / metric</div></div></div>
+          <div class="comp-item" draggable="true" data-type="chart-bar"><i class="bi bi-bar-chart" style="color:#818cf8"></i><div><div class="comp-name">Bar Chart</div><div class="comp-desc">Interactive chart</div></div></div>
+          <div class="comp-item" draggable="true" data-type="chart-line"><i class="bi bi-graph-up" style="color:#818cf8"></i><div><div class="comp-name">Line Chart</div><div class="comp-desc">Trend chart</div></div></div>
+          <div class="comp-item" draggable="true" data-type="progress"><i class="bi bi-reception-4" style="color:#22c55e"></i><div><div class="comp-name">Progress Bar</div><div class="comp-desc">Percentage bar</div></div></div>
+        </div>
+        <div class="comp-group">
+          <div class="comp-group-label">Feedback</div>
+          <div class="comp-item" draggable="true" data-type="badge-success"><i class="bi bi-tag-fill" style="color:#22c55e"></i><div><div class="comp-name">Badge – Success</div><div class="comp-desc">Status pill</div></div></div>
+          <div class="comp-item" draggable="true" data-type="badge-warn"><i class="bi bi-tag-fill" style="color:#f59e0b"></i><div><div class="comp-name">Badge – Warning</div><div class="comp-desc">Status pill</div></div></div>
+          <div class="comp-item" draggable="true" data-type="badge-danger"><i class="bi bi-tag-fill" style="color:#ef4444"></i><div><div class="comp-name">Badge – Danger</div><div class="comp-desc">Status pill</div></div></div>
+          <div class="comp-item" draggable="true" data-type="alert-info"><i class="bi bi-info-circle-fill" style="color:#818cf8"></i><div><div class="comp-name">Alert – Info</div><div class="comp-desc">Info banner</div></div></div>
+          <div class="comp-item" draggable="true" data-type="alert-success"><i class="bi bi-check-circle-fill" style="color:#22c55e"></i><div><div class="comp-name">Alert – Success</div><div class="comp-desc">Success banner</div></div></div>
+          <div class="comp-item" draggable="true" data-type="alert-warn"><i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b"></i><div><div class="comp-name">Alert – Warning</div><div class="comp-desc">Warning banner</div></div></div>
+        </div>
+        <div class="comp-group">
+          <div class="comp-group-label">Media</div>
+          <div class="comp-item" draggable="true" data-type="image"><i class="bi bi-image" style="color:#818cf8"></i><div><div class="comp-name">Image</div><div class="comp-desc">Image placeholder</div></div></div>
+          <div class="comp-item" draggable="true" data-type="card"><i class="bi bi-card-text" style="color:#8892a4"></i><div><div class="comp-name">Content Card</div><div class="comp-desc">Title + body card</div></div></div>
+        </div>
+      </div>
+
+      <!-- Properties Panel -->
+      <div id="props-panel">
+        <div class="props-title"><i class="bi bi-sliders"></i> Properties</div>
+        <div id="no-sel">Select an element<br>to edit its properties</div>
+        <div id="prop-fields" style="display:none"></div>
+      </div>
+    </div>
+    <!-- ── /WebCraft Sidebar ── -->
+
+    <!-- ── Canvas ── -->
+    <div id="canvas-wrap">
+      <div id="wc-canvas">
+        <div class="canvas-drop-hint" id="drop-hint">
+          <i class="bi bi-grid-1x2"></i>
+          <p>Drag components from the panel</p>
+          <small>or click any item to place it</small>
+        </div>
+        <div id="drop-indicator"></div>
+      </div>
+    </div>
+
+    <!-- ── Modal Overlay ── -->
+    <div id="wc-modal-overlay">
+      <div class="app-modal-wc">
+        <div class="modal-header-wc">
+          <h3 id="modal-title">Modal Title</h3>
+          <button class="modal-close-wc" onclick="closeModal()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="modal-body-wc" id="modal-body">Modal content goes here.</div>
+        <div class="modal-footer-wc">
+          <button class="btn-secondary-wc" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary-wc">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Context Menu ── -->
+    <div id="ctx-menu">
+      <div class="ctx-item" id="ctx-duplicate"><i class="bi bi-copy"></i> Duplicate</div>
+      <div class="ctx-item" id="ctx-front"><i class="bi bi-layers-half"></i> Bring to front</div>
+      <div class="ctx-item" id="ctx-back"><i class="bi bi-layers"></i> Send to back</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item danger" id="ctx-delete"><i class="bi bi-trash"></i> Delete</div>
+    </div>
+
+    <!-- ── Toast container ── -->
+    <div id="toast-wrap"></div>
+
+    <!-- ── Image Export Modal ── -->
+    <div id="img-export-overlay">
+      <div id="img-export-modal">
+        <h3><i class="bi bi-image" style="color:var(--wc-accent2)"></i> Save Canvas as Image</h3>
+        <div class="img-export-opts">
+          <label>Format</label>
+          <select id="img-format">
+            <option value="png">PNG (lossless)</option>
+            <option value="jpeg">JPEG (smaller)</option>
+            <option value="webp">WebP (modern)</option>
+          </select>
+          <label>Scale</label>
+          <select id="img-scale">
+            <option value="1">1× screen</option>
+            <option value="2" selected>2× retina</option>
+            <option value="3">3× hi-res</option>
+          </select>
+          <label>Background</label>
+          <select id="img-bg">
+            <option value="#0f1117">Dark (default)</option>
+            <option value="#ffffff">White</option>
+            <option value="#f8fafc">Light gray</option>
+            <option value="transparent">Transparent (PNG)</option>
+          </select>
+          <label>Filename</label>
+          <input id="img-filename" type="text" value="my-app" style="width:100px"/>
+        </div>
+        <div id="img-preview-wrap">
+          <div id="img-capture-status" class="capture-progress"><span class="spinner"></span> Rendering canvas…</div>
+          <img id="img-preview" src="" alt="Preview" style="display:none"/>
+        </div>
+        <div class="img-export-footer">
+          <button class="img-cancel-btn" onclick="closeImgExport()">Cancel</button>
+          <button class="img-copy-btn" id="img-copy-btn" disabled><i class="bi bi-clipboard"></i> Copy</button>
+          <button class="img-dl-btn"   id="img-dl-btn"   disabled><i class="bi bi-download"></i>  Download</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /.app-wrapper -->
+
+<!-- ── Scripts ── -->
+<script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js" crossorigin="anonymous"></script>
+<script src="./js/adminlte.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<script>
+// ── SIDEBAR RESPONSIVE TOGGLE ──
+const wcSidebar   = document.getElementById('wc-sidebar');
+const wcBackdrop  = document.getElementById('wc-sidebar-backdrop');
+const wcToggleBtn = document.getElementById('wc-sidebar-toggle');
+
+function openSidebar(){
+  wcSidebar.classList.add('open');
+  wcBackdrop.classList.add('show');
+}
+function closeSidebar(){
+  wcSidebar.classList.remove('open');
+  wcBackdrop.classList.remove('show');
+}
+wcToggleBtn.addEventListener('click', ()=>{
+  wcSidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+wcBackdrop.addEventListener('click', closeSidebar);
+
+// ── LAYOUT OFFSET SYNC ──
+// Keep canvas-wrap top in sync with AdminLTE navbar height
+function syncOffsets(){
+  const lteNav = document.querySelector('.app-header');
+  const navH = lteNav ? lteNav.getBoundingClientRect().height : 57;
+  document.documentElement.style.setProperty('--lte-navbar-h', navH + 'px');
+}
+window.addEventListener('resize', syncOffsets);
+document.addEventListener('DOMContentLoaded', syncOffsets);
+syncOffsets();
+
+// ── STATE ──
+let elements  = [];
+let selectedId = null;
+let elCounter  = 0;
+let dragType   = null;
+let isDraggingEl = false;
+let dragOffset = {x:0,y:0};
+let isResizing = false;
+let resizeStart = {};
+let snapEnabled = true;
+let undoStack = [];
+let redoStack = [];
+const SNAP = 16;
+
+const canvas    = document.getElementById('wc-canvas');
+const dropHint  = document.getElementById('drop-hint');
+const propsFields = document.getElementById('prop-fields');
+const noSel     = document.getElementById('no-sel');
+const ctxMenu   = document.getElementById('ctx-menu');
+const canvasWrap = document.getElementById('canvas-wrap');
+
+// ── UTILS ──
+function uid(){ return 'el_'+(++elCounter); }
+function snap(v){ return snapEnabled ? Math.round(v/SNAP)*SNAP : v; }
+function toast(msg,type=''){
+  const t = document.createElement('div');
+  t.className = 'toast-item'+(type?' '+type:'');
+  t.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(t);
+  setTimeout(()=>t.remove(), 2500);
+}
+function saveUndo(){
+  undoStack.push(JSON.stringify(elements));
+  if(undoStack.length>50) undoStack.shift();
+  redoStack = [];
+}
+function cloneEl(el){ return JSON.parse(JSON.stringify(el)); }
+
+// ── COMPONENT DEFAULTS ──
+const defaults = {
+  container:      {w:280,h:120,label:'Container'},
+  navbar:         {w:600,h:52,label:'Navbar'},
+  divider:        {w:300,h:20,label:'Divider'},
+  heading:        {w:300,h:50,label:'Heading',text:'Page Title',level:'h1'},
+  text:           {w:280,h:60,label:'Text Block',text:'Your paragraph text goes here.'},
+  'btn-primary':  {w:140,h:44,label:'Primary Button',text:'Click me',icon:''},
+  'btn-secondary':{w:150,h:44,label:'Secondary Button',text:'Cancel',icon:''},
+  'btn-danger':   {w:140,h:44,label:'Danger Button',text:'Delete',icon:''},
+  'modal-trigger':{w:180,h:44,label:'Modal Button',text:'Open Modal',modalTitle:'Confirm Action',modalBody:'Are you sure you want to proceed?'},
+  input:          {w:240,h:40,label:'Text Input',placeholder:'Enter text…',inputType:'text'},
+  select:         {w:220,h:40,label:'Select',options:'Option 1\nOption 2\nOption 3'},
+  table:          {w:540,h:200,label:'Data Table',cols:'Name,Role,Status,Date',rows:[['Alice','Admin','Active','2025-01'],['Bob','Editor','Inactive','2025-02'],['Carol','Viewer','Active','2025-03']]},
+  'stat-card':    {w:160,h:100,label:'Stat Card',value:'1,284',statLabel:'Total Users',trend:'+12%',trendDir:'up'},
+  'chart-bar':    {w:360,h:220,label:'Bar Chart',chartTitle:'Monthly Revenue',chartData:'Jan:12,Feb:19,Mar:15,Apr:22,May:18,Jun:25'},
+  'chart-line':   {w:360,h:220,label:'Line Chart',chartTitle:'Growth Trend',chartData:'Jan:5,Feb:9,Mar:14,Apr:11,May:18,Jun:23'},
+  progress:       {w:280,h:60,label:'Progress Bar',progressLabel:'Upload Progress',progressValue:65},
+  'badge-success':{w:90,h:30,label:'Badge Success',text:'Active'},
+  'badge-warn':   {w:90,h:30,label:'Badge Warning',text:'Pending'},
+  'badge-danger': {w:90,h:30,label:'Badge Danger',text:'Error'},
+  'alert-info':   {w:360,h:50,label:'Info Alert',text:'This is an informational message.'},
+  'alert-success':{w:360,h:50,label:'Success Alert',text:'Operation completed successfully!'},
+  'alert-warn':   {w:360,h:50,label:'Warning Alert',text:'Please review before proceeding.'},
+  image:          {w:240,h:160,label:'Image',src:'',alt:'Image placeholder'},
+  card:           {w:260,h:130,label:'Content Card',cardTitle:'Card Title',cardBody:'Describe something useful here.'},
+};
+
+// ── RENDER INNER HTML ──
+function renderInner(el){
+  const d=el.data, t=el.type;
+  if(t==='container') return `<div class="el-container" style="width:100%;height:100%;"></div>`;
+  if(t==='navbar') return `<div class="el-navbar"><span class="nav-brand">Brand</span><div class="nav-links"><span class="nav-link">Home</span><span class="nav-link">About</span><span class="nav-link">Docs</span></div><span class="ms-auto"><span class="el-badge badge-accent">v1.0</span></span></div>`;
+  if(t==='divider') return `<hr class="el-divider"/>`;
+  if(t==='heading'){
+    const tag=d.level||'h1';
+    const sz={h1:'26px',h2:'20px',h3:'17px',h4:'14px'}[tag]||'22px';
+    return `<${tag} class="el-heading" style="font-size:${sz}" contenteditable="false">${d.text}</${tag}>`;
+  }
+  if(t==='text') return `<p class="el-text" contenteditable="false">${d.text}</p>`;
+  if(t==='btn-primary')  return `<button class="el-btn-primary">${d.icon?`<i class="bi bi-${d.icon}"></i>`:''}${d.text}</button>`;
+  if(t==='btn-secondary') return `<button class="el-btn-secondary">${d.icon?`<i class="bi bi-${d.icon}"></i>`:''}${d.text}</button>`;
+  if(t==='btn-danger')   return `<button class="el-btn-danger">${d.icon?`<i class="bi bi-${d.icon}"></i>`:''}${d.text}</button>`;
+  if(t==='modal-trigger') return `<button class="el-modal-btn" onclick="openModalForEl('${el.id}')"><i class="bi bi-window"></i>${d.text}</button>`;
+  if(t==='input') return `<input class="el-input" type="${d.inputType||'text'}" placeholder="${d.placeholder||'Enter text…'}" onclick="event.stopPropagation()"/>`;
+  if(t==='select'){
+    const opts=(d.options||'').split('\n').map(o=>`<option>${o.trim()}</option>`).join('');
+    return `<select class="el-select" onclick="event.stopPropagation()">${opts}</select>`;
+  }
+  if(t==='table') return renderTable(d);
+  if(t==='stat-card') return `<div class="el-stat-card"><div class="stat-value">${d.value}</div><div class="stat-label">${d.statLabel}</div><div class="stat-trend ${d.trendDir||'up'}">${d.trendDir==='up'?'▲':'▼'} ${d.trend}</div></div>`;
+  if(t==='chart-bar'||t==='chart-line') return `<div class="el-chart-placeholder" style="width:100%;height:100%"><canvas id="chart_${el.id}" style="max-width:100%;max-height:100%"></canvas></div>`;
+  if(t==='progress') return `<div class="el-progress"><div class="bar-label"><span>${d.progressLabel}</span><span>${d.progressValue}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${d.progressValue}%"></div></div></div>`;
+  if(t==='badge-success') return `<span class="el-badge badge-success">${d.text}</span>`;
+  if(t==='badge-warn')    return `<span class="el-badge badge-warn">${d.text}</span>`;
+  if(t==='badge-danger')  return `<span class="el-badge badge-danger">${d.text}</span>`;
+  if(t==='alert-info')    return `<div class="el-alert alert-info"><i class="bi bi-info-circle-fill"></i> ${d.text}</div>`;
+  if(t==='alert-success') return `<div class="el-alert alert-success"><i class="bi bi-check-circle-fill"></i> ${d.text}</div>`;
+  if(t==='alert-warn')    return `<div class="el-alert alert-warn"><i class="bi bi-exclamation-triangle-fill"></i> ${d.text}</div>`;
+  if(t==='image') return d.src?`<div class="el-image"><img src="${d.src}" alt="${d.alt}"/></div>`:`<div class="el-image" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;color:var(--wc-dim);font-size:11px;"><i class="bi bi-image" style="font-size:28px;color:var(--wc-border2)"></i>Enter image URL in properties</div>`;
+  if(t==='card') return `<div class="el-card"><div class="card-title">${d.cardTitle}</div><div class="card-body">${d.cardBody}</div></div>`;
+  return `<div style="color:var(--wc-muted);font-size:11px;padding:7px">${t}</div>`;
+}
+
+function renderTable(d){
+  const cols=(d.cols||'Col1,Col2,Col3').split(',');
+  const rows=d.rows||[['Cell','Cell','Cell']];
+  let ths=cols.map(c=>`<th>${c}</th>`).join('');
+  let trs=rows.map((r,ri)=>`<tr>${cols.map((_,ci)=>`<td contenteditable="true" data-ri="${ri}" data-ci="${ci}">${r[ci]||''}</td>`).join('')}<td style="width:24px"><button onclick="delRow(this,event)" style="background:none;border:none;color:var(--wc-dim);cursor:pointer;font-size:12px;" title="Remove row"><i class="bi bi-x-circle"></i></button></td></tr>`).join('');
+  return `<div class="el-table-wrap"><table class="el-table"><thead><tr>${ths}<th></th></tr></thead><tbody>${trs}</tbody></table><button class="el-table-add-row" onclick="addTableRow(this,event)"><i class="bi bi-plus"></i> Add row</button></div>`;
+}
+
+// ── CREATE DOM ELEMENT ──
+function createDomEl(el){
+  const div=document.createElement('div');
+  div.className='canvas-el';
+  div.id=el.id;
+  div.style.left=el.x+'px';
+  div.style.top=el.y+'px';
+  div.style.width=el.w+'px';
+  div.style.height=el.h+'px';
+  div.style.zIndex=el.z||1;
+  div.innerHTML=`
+    <div class="el-toolbar">
+      <button class="el-tb-btn" title="Duplicate" onclick="duplicateEl('${el.id}',event)"><i class="bi bi-copy"></i></button>
+      <button class="el-tb-btn" title="Move up"   onclick="moveZEl('${el.id}','up',event)"><i class="bi bi-arrow-up-square"></i></button>
+      <button class="el-tb-btn" title="Move down" onclick="moveZEl('${el.id}','down',event)"><i class="bi bi-arrow-down-square"></i></button>
+      <button class="el-tb-btn danger" title="Delete" onclick="deleteEl('${el.id}',event)"><i class="bi bi-trash"></i></button>
+    </div>
+    <div class="el-inner" style="width:100%;height:100%;">${renderInner(el)}</div>
+    <div class="resize-handle" data-id="${el.id}"></div>`;
+  div.addEventListener('mousedown', e=>onElMousedown(e,el.id));
+  div.querySelector('.resize-handle').addEventListener('mousedown',e=>onResizeStart(e,el.id));
+  div.addEventListener('contextmenu', e=>showCtxMenu(e,el.id));
+  canvas.appendChild(div);
+  if(el.type==='chart-bar'||el.type==='chart-line') setTimeout(()=>renderChart(el),50);
+}
+
+function renderChart(el){
+  const cvs=document.getElementById('chart_'+el.id);
+  if(!cvs) return;
+  if(cvs._chartInstance) cvs._chartInstance.destroy();
+  const entries=(el.data.chartData||'').split(',').map(s=>{const[l,v]=s.split(':');return{label:l,value:parseFloat(v)||0};});
+  const type=el.type==='chart-line'?'line':'bar';
+  cvs._chartInstance=new Chart(cvs,{
+    type,
+    data:{
+      labels:entries.map(e=>e.label),
+      datasets:[{
+        label:el.data.chartTitle||'',
+        data:entries.map(e=>e.value),
+        backgroundColor:'#6366f155',
+        borderColor:'#6366f1',
+        borderWidth:2,
+        borderRadius:4,
+        pointBackgroundColor:'#6366f1',
+        tension:.4
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'#2a3050'},ticks:{color:'#8892a4',font:{size:10}}},
+        y:{grid:{color:'#2a3050'},ticks:{color:'#8892a4',font:{size:10}}}
+      }
+    }
+  });
+}
+
+// ── PLACE ELEMENT ──
+function placeElement(type,x,y){
+  saveUndo();
+  const def=defaults[type]||{w:200,h:80,label:type};
+  const el={
+    id:uid(), type, x:snap(x), y:snap(y),
+    w:def.w, h:def.h, z:elements.length+1,
+    data:{...def}
+  };
+  elements.push(el);
+  createDomEl(el);
+  dropHint.style.display='none';
+  selectEl(el.id);
+  toast('Added '+def.label,'success');
+}
+
+// ── DRAG FROM SIDEBAR ──
+document.querySelectorAll('.comp-item').forEach(item=>{
+  item.addEventListener('dragstart',e=>{
+    dragType=item.dataset.type;
+    e.dataTransfer.setData('text/plain',dragType);
+  });
+  item.addEventListener('click',()=>{
+    placeElement(item.dataset.type, 60+Math.random()*200, 60+Math.random()*180);
+    // Close sidebar on mobile after placing
+    if(window.innerWidth < 992) closeSidebar();
+  });
+});
+
+canvasWrap.addEventListener('dragover',e=>e.preventDefault());
+canvasWrap.addEventListener('drop',e=>{
+  e.preventDefault();
+  if(!dragType) return;
+  const def=defaults[dragType]||{w:200,h:80};
+  const r=canvas.getBoundingClientRect();
+  const x=e.clientX-r.left-def.w/2+canvasWrap.scrollLeft;
+  const y=e.clientY-r.top-def.h/2+canvasWrap.scrollTop;
+  placeElement(dragType,x,y);
+  dragType=null;
+});
+
+// ── DRAG ELEMENTS ON CANVAS ──
+function onElMousedown(e,id){
+  if(e.target.closest('.el-toolbar,.resize-handle,button,input,select,td,canvas')) return;
+  e.preventDefault();
+  selectEl(id);
+  isDraggingEl=true;
+  const el=elements.find(x=>x.id===id);
+  const r=canvas.getBoundingClientRect();
+  dragOffset={
+    x:e.clientX-r.left+canvasWrap.scrollLeft-el.x,
+    y:e.clientY-r.top+canvasWrap.scrollTop-el.y
+  };
+  const move=ev=>{
+    if(!isDraggingEl) return;
+    const nx=snap(ev.clientX-r.left+canvasWrap.scrollLeft-dragOffset.x);
+    const ny=snap(ev.clientY-r.top+canvasWrap.scrollTop-dragOffset.y);
+    el.x=Math.max(0,nx); el.y=Math.max(0,ny);
+    const dom=document.getElementById(id);
+    if(dom){dom.style.left=el.x+'px';dom.style.top=el.y+'px';}
+  };
+  const up=()=>{
+    if(isDraggingEl) saveUndo();
+    isDraggingEl=false;
+    document.removeEventListener('mousemove',move);
+    document.removeEventListener('mouseup',up);
+  };
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',up);
+}
+
+// ── RESIZE ──
+function onResizeStart(e,id){
+  e.stopPropagation(); e.preventDefault();
+  isResizing=true;
+  const el=elements.find(x=>x.id===id);
+  resizeStart={x:e.clientX,y:e.clientY,w:el.w,h:el.h,el};
+  const move=ev=>{
+    const nw=snap(Math.max(80,resizeStart.w+(ev.clientX-resizeStart.x)));
+    const nh=snap(Math.max(30,resizeStart.h+(ev.clientY-resizeStart.y)));
+    resizeStart.el.w=nw; resizeStart.el.h=nh;
+    const dom=document.getElementById(resizeStart.el.id);
+    if(dom){dom.style.width=nw+'px';dom.style.height=nh+'px';}
+  };
+  const up=()=>{
+    saveUndo(); isResizing=false;
+    document.removeEventListener('mousemove',move);
+    document.removeEventListener('mouseup',up);
+    if(resizeStart.el.type==='chart-bar'||resizeStart.el.type==='chart-line') renderChart(resizeStart.el);
+  };
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',up);
+}
+
+// ── SELECT ──
+function selectEl(id){
+  document.querySelectorAll('.canvas-el').forEach(e=>e.classList.remove('selected'));
+  selectedId=id;
+  if(id){
+    document.getElementById(id)?.classList.add('selected');
+    renderProps(id);
+  } else {
+    propsFields.style.display='none';
+    noSel.style.display='block';
+  }
+}
+canvas.addEventListener('mousedown',e=>{
+  if(e.target===canvas||e.target.closest('.canvas-drop-hint')) selectEl(null);
+});
+
+// ── PROPERTIES PANEL ──
+function renderProps(id){
+  const el=elements.find(x=>x.id===id);
+  if(!el){propsFields.style.display='none';noSel.style.display='block';return;}
+  noSel.style.display='none';
+  propsFields.style.display='block';
+  const d=el.data;
+  let html='';
+  const textField=(key,lbl,ta=false)=>`<div class="prop-row"><label class="prop-label">${lbl}</label>${ta?`<textarea class="prop-input" rows="3" oninput="setProp('${id}','${key}',this.value)">${d[key]||''}</textarea>`:`<input class="prop-input" value="${(d[key]||'').replace(/"/g,'&quot;')}" oninput="setProp('${id}','${key}',this.value)"/>`}</div>`;
+  const numField=(key,lbl,mn=0,mx=9999)=>`<div class="prop-row"><label class="prop-label">${lbl}</label><input class="prop-input" type="number" min="${mn}" max="${mx}" value="${d[key]||0}" oninput="setProp('${id}','${key}',parseFloat(this.value)||0)"/></div>`;
+  html+=`<div class="prop-row"><label class="prop-label">X / Y</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><input class="prop-input" type="number" value="${Math.round(el.x)}" oninput="setPos('${id}','x',this.value)"/><input class="prop-input" type="number" value="${Math.round(el.y)}" oninput="setPos('${id}','y',this.value)"/></div></div>`;
+  html+=`<div class="prop-row"><label class="prop-label">W / H</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><input class="prop-input" type="number" value="${Math.round(el.w)}" oninput="setSize('${id}','w',this.value)"/><input class="prop-input" type="number" value="${Math.round(el.h)}" oninput="setSize('${id}','h',this.value)"/></div></div>`;
+  if(['btn-primary','btn-secondary','btn-danger','modal-trigger','heading','text','badge-success','badge-warn','badge-danger','alert-info','alert-success','alert-warn'].includes(el.type))
+    html+=textField('text','Label / Text');
+  if(['btn-primary','btn-secondary','btn-danger'].includes(el.type))
+    html+=textField('icon','Bootstrap Icon Name');
+  if(el.type==='heading')
+    html+=`<div class="prop-row"><label class="prop-label">Level</label><select class="prop-input" onchange="setProp('${id}','level',this.value)"><option ${d.level==='h1'?'selected':''}>h1</option><option ${d.level==='h2'?'selected':''}>h2</option><option ${d.level==='h3'?'selected':''}>h3</option><option ${d.level==='h4'?'selected':''}>h4</option></select></div>`;
+  if(el.type==='text') html+=textField('text','Content',true);
+  if(el.type==='input'){
+    html+=textField('placeholder','Placeholder');
+    html+=`<div class="prop-row"><label class="prop-label">Input type</label><select class="prop-input" onchange="setProp('${id}','inputType',this.value)"><option ${d.inputType==='text'?'selected':''} value="text">text</option><option ${d.inputType==='email'?'selected':''} value="email">email</option><option ${d.inputType==='password'?'selected':''} value="password">password</option><option ${d.inputType==='number'?'selected':''} value="number">number</option></select></div>`;
+  }
+  if(el.type==='select') html+=textField('options','Options (one per line)',true);
+  if(el.type==='modal-trigger'){
+    html+=textField('text','Button Label');
+    html+=textField('modalTitle','Modal Title');
+    html+=textField('modalBody','Modal Body',true);
+  }
+  if(el.type==='stat-card'){
+    html+=textField('value','Value');
+    html+=textField('statLabel','Label');
+    html+=textField('trend','Trend');
+    html+=`<div class="prop-row"><label class="prop-label">Direction</label><select class="prop-input" onchange="setProp('${id}','trendDir',this.value)"><option value="up" ${d.trendDir==='up'?'selected':''}>Up ▲</option><option value="down" ${d.trendDir==='down'?'selected':''}>Down ▼</option></select></div>`;
+  }
+  if(el.type==='chart-bar'||el.type==='chart-line'){
+    html+=textField('chartTitle','Chart Title');
+    html+=textField('chartData','Data (Label:Val,…)');
+  }
+  if(el.type==='progress'){
+    html+=textField('progressLabel','Label');
+    html+=numField('progressValue','Value (%)',0,100);
+  }
+  if(el.type==='image'){
+    html+=textField('src','Image URL');
+    html+=textField('alt','Alt text');
+  }
+  if(el.type==='card'){
+    html+=textField('cardTitle','Card Title');
+    html+=textField('cardBody','Card Body',true);
+  }
+  if(el.type==='table'){
+    html+=textField('cols','Columns (comma-separated)');
+    html+=`<div class="prop-row"><button class="prop-btn" onclick="addTableColFromProps('${id}')"><i class="bi bi-plus-lg"></i> Add column</button></div>`;
+  }
+  html+=`<div class="prop-row" style="margin-top:6px"><button class="prop-btn danger" onclick="deleteEl('${id}')"><i class="bi bi-trash"></i> Delete element</button></div>`;
+  propsFields.innerHTML=html;
+}
+
+function setProp(id,key,val){
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  el.data[key]=val;
+  const dom=document.getElementById(id);
+  if(dom){
+    dom.querySelector('.el-inner').innerHTML=renderInner(el);
+    if(el.type==='chart-bar'||el.type==='chart-line') setTimeout(()=>renderChart(el),30);
+  }
+}
+function setPos(id,axis,val){
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  el[axis]=parseFloat(val)||0;
+  const dom=document.getElementById(id);
+  if(dom) dom.style[axis==='x'?'left':'top']=el[axis]+'px';
+}
+function setSize(id,axis,val){
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  el[axis]=parseFloat(val)||80;
+  const dom=document.getElementById(id);
+  if(dom) dom.style[axis==='w'?'width':'height']=el[axis]+'px';
+  if(el.type==='chart-bar'||el.type==='chart-line') setTimeout(()=>renderChart(el),30);
+}
+
+// ── TABLE HELPERS ──
+function addTableRow(btn,e){
+  e.stopPropagation();
+  const elId=btn.closest('.canvas-el').id;
+  const el=elements.find(x=>x.id===elId);if(!el)return;
+  const cols=(el.data.cols||'').split(',');
+  el.data.rows.push(cols.map(()=>''));
+  document.getElementById(elId).querySelector('.el-inner').innerHTML=renderInner(el);
+}
+function delRow(btn,e){
+  e.stopPropagation();
+  const elId=btn.closest('.canvas-el').id;
+  const el=elements.find(x=>x.id===elId);if(!el)return;
+  const ri=parseInt(btn.closest('tr').querySelector('td').dataset.ri);
+  el.data.rows.splice(ri,1);
+  document.getElementById(elId).querySelector('.el-inner').innerHTML=renderInner(el);
+}
+function addTableColFromProps(id){
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  const name=prompt('Column name:','New Col');if(!name)return;
+  saveUndo();
+  el.data.cols+=','+name;
+  el.data.rows.forEach(r=>r.push(''));
+  document.getElementById(id).querySelector('.el-inner').innerHTML=renderInner(el);
+}
+
+// ── DELETE / DUPLICATE / Z ──
+function deleteEl(id,e){
+  if(e) e.stopPropagation();
+  saveUndo();
+  elements=elements.filter(x=>x.id!==id);
+  document.getElementById(id)?.remove();
+  if(selectedId===id) selectEl(null);
+  if(!elements.length) dropHint.style.display='';
+  toast('Deleted');
+}
+function duplicateEl(id,e){
+  if(e) e.stopPropagation();
+  saveUndo();
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  const clone={...cloneEl(el),id:uid(),x:el.x+24,y:el.y+24,z:elements.length+2};
+  elements.push(clone);
+  createDomEl(clone);
+  selectEl(clone.id);
+  toast('Duplicated');
+}
+function moveZEl(id,dir,e){
+  e?.stopPropagation();
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  el.z=dir==='up'?(el.z||1)+1:Math.max(1,(el.z||1)-1);
+  document.getElementById(id).style.zIndex=el.z;
+}
+
+// ── CONTEXT MENU ──
+function showCtxMenu(e,id){
+  e.preventDefault(); e.stopPropagation();
+  selectEl(id);
+  ctxMenu.style.display='block';
+  ctxMenu.style.left=e.clientX+'px';
+  ctxMenu.style.top=e.clientY+'px';
+  ctxMenu._id=id;
+}
+document.addEventListener('click',()=>ctxMenu.style.display='none');
+document.getElementById('ctx-duplicate').onclick=()=>duplicateEl(ctxMenu._id);
+document.getElementById('ctx-delete').onclick=()=>deleteEl(ctxMenu._id);
+document.getElementById('ctx-front').onclick=()=>moveZEl(ctxMenu._id,'up');
+document.getElementById('ctx-back').onclick=()=>moveZEl(ctxMenu._id,'down');
+
+// ── MODAL ──
+function openModalForEl(id){
+  const el=elements.find(x=>x.id===id);if(!el)return;
+  document.getElementById('modal-title').textContent=el.data.modalTitle||'Modal';
+  document.getElementById('modal-body').textContent=el.data.modalBody||'';
+  document.getElementById('wc-modal-overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('wc-modal-overlay').classList.remove('show'); }
+document.getElementById('wc-modal-overlay').addEventListener('mousedown',e=>{
+  if(e.target===document.getElementById('wc-modal-overlay')) closeModal();
+});
+
+// ── UNDO / REDO ──
+function applyState(state){
+  elements=JSON.parse(state);
+  canvas.querySelectorAll('.canvas-el').forEach(e=>e.remove());
+  elements.forEach(el=>createDomEl(el));
+  selectEl(null);
+  dropHint.style.display=elements.length?'none':'';
+}
+document.getElementById('undo-btn').onclick=()=>{
+  if(!undoStack.length) return;
+  redoStack.push(JSON.stringify(elements));
+  applyState(undoStack.pop());
+  toast('Undone');
+};
+document.getElementById('redo-btn').onclick=()=>{
+  if(!redoStack.length) return;
+  undoStack.push(JSON.stringify(elements));
+  applyState(redoStack.pop());
+  toast('Redone');
+};
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();document.getElementById('undo-btn').click();}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='Z'))){e.preventDefault();document.getElementById('redo-btn').click();}
+  if((e.key==='Delete'||e.key==='Backspace')&&selectedId&&!document.activeElement.matches('input,textarea,[contenteditable]'))
+    deleteEl(selectedId);
+  if((e.ctrlKey||e.metaKey)&&e.key==='d'&&selectedId){e.preventDefault();duplicateEl(selectedId);}
+});
+
+// ── SNAP / GRID ──
+let gridVisible=true;
+document.getElementById('snap-btn').addEventListener('click',function(){
+  snapEnabled=!snapEnabled;
+  this.classList.toggle('active',snapEnabled);
+  toast('Snap '+(snapEnabled?'on':'off'));
+});
+document.getElementById('snap-btn').classList.add('active');
+document.getElementById('grid-btn').addEventListener('click',function(){
+  gridVisible=!gridVisible;
+  document.getElementById('canvas-wrap').style.backgroundImage=gridVisible
+    ?'repeating-linear-gradient(0deg,transparent,transparent 31px,var(--wc-border) 31px,var(--wc-border) 32px),repeating-linear-gradient(90deg,transparent,transparent 31px,var(--wc-border) 31px,var(--wc-border) 32px)'
+    :'none';
+  this.classList.toggle('active',gridVisible);
+});
+document.getElementById('grid-btn').classList.add('active');
+
+// ── CLEAR ──
+document.getElementById('clear-btn').onclick=()=>{
+  if(!elements.length) return;
+  if(!confirm('Clear all elements?')) return;
+  saveUndo();
+  elements=[];
+  canvas.querySelectorAll('.canvas-el').forEach(e=>e.remove());
+  selectEl(null);
+  dropHint.style.display='';
+  toast('Canvas cleared');
+};
+
+// ── PREVIEW ──
+document.getElementById('preview-btn').onclick=()=>document.body.classList.add('preview-mode');
+function exitPreview(){ document.body.classList.remove('preview-mode'); }
+
+// ── EXPORT HTML ──
+document.getElementById('export-btn').onclick=()=>{
+  elements.forEach(el=>{
+    if(el.type==='table'){
+      const dom=document.getElementById(el.id);
+      if(dom) dom.querySelectorAll('td[data-ri]').forEach(td=>{
+        const ri=parseInt(td.dataset.ri),ci=parseInt(td.dataset.ci);
+        if(el.data.rows[ri]) el.data.rows[ri][ci]=td.textContent;
+      });
+    }
+  });
+  const body=elements.map(el=>`<div style="position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;z-index:${el.z||1}">${renderInner(el)}</div>`).join('\n');
+  const html=`<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8"/>\n<title>My App</title>\n<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet"/>\n<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:sans-serif;background:#0f1117;color:#e2e8f0;}</style>\n</head>\n<body>\n<div style="position:relative;min-height:100vh;">\n${body}\n</div>\n</body>\n</html>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download='my-app.html';
+  a.click();
+  toast('HTML exported!','success');
+};
+
+// ── EXPORT AS IMAGE ──
+let capturedDataUrl=null;
+async function openImgExport(){
+  if(!elements.length){toast('Add some elements first');return;}
+  selectEl(null);
+  document.getElementById('img-export-overlay').classList.add('show');
+  document.getElementById('img-preview').style.display='none';
+  document.getElementById('img-capture-status').style.display='flex';
+  document.getElementById('img-dl-btn').disabled=true;
+  document.getElementById('img-copy-btn').disabled=true;
+  capturedDataUrl=null;
+  await captureCanvas();
+}
+async function captureCanvas(){
+  const fmt=document.getElementById('img-format').value;
+  const scale=parseInt(document.getElementById('img-scale').value)||2;
+  const bg=document.getElementById('img-bg').value;
+  let minX=Infinity,minY=Infinity,maxX=0,maxY=0;
+  elements.forEach(el=>{
+    minX=Math.min(minX,el.x);minY=Math.min(minY,el.y);
+    maxX=Math.max(maxX,el.x+el.w);maxY=Math.max(maxY,el.y+el.h);
+  });
+  const pad=32;
+  minX=Math.max(0,minX-pad);minY=Math.max(0,minY-pad);maxX+=pad;maxY+=pad;
+  try{
+    const h2c=window.html2canvas;
+    if(!h2c){toast('html2canvas not ready — retry','danger');return;}
+    const cvs=await h2c(canvas,{
+      backgroundColor:bg==='transparent'?null:bg,
+      scale, x:minX, y:minY, width:maxX-minX, height:maxY-minY,
+      useCORS:true, allowTaint:true, logging:false,
+      ignoreElements:el=>el.classList&&(el.classList.contains('el-toolbar')||el.classList.contains('resize-handle')||el.id==='drop-hint'||el.id==='drop-indicator')
+    });
+    const mime={'png':'image/png','jpeg':'image/jpeg','webp':'image/webp'}[fmt]||'image/png';
+    capturedDataUrl=cvs.toDataURL(mime,fmt==='png'?1:0.92);
+    const prev=document.getElementById('img-preview');
+    prev.src=capturedDataUrl;
+    prev.style.display='block';
+    document.getElementById('img-capture-status').style.display='none';
+    document.getElementById('img-dl-btn').disabled=false;
+    document.getElementById('img-copy-btn').disabled=false;
+  }catch(err){
+    document.getElementById('img-capture-status').innerHTML=`<span style="color:var(--wc-danger)"><i class="bi bi-exclamation-triangle"></i> Capture failed: ${err.message}</span>`;
+  }
+}
+function downloadImage(){
+  if(!capturedDataUrl)return;
+  const fmt=document.getElementById('img-format').value;
+  const name=(document.getElementById('img-filename').value||'my-app')+'.'+fmt;
+  const a=document.createElement('a');a.href=capturedDataUrl;a.download=name;a.click();
+  toast('Saved as '+name,'success');
+}
+async function copyImageToClipboard(){
+  if(!capturedDataUrl)return;
+  try{
+    const res=await fetch(capturedDataUrl);
+    const blob=await res.blob();
+    await navigator.clipboard.write([new ClipboardItem({[blob.type]:blob})]);
+    toast('Copied to clipboard!','success');
+  }catch{
+    const w=window.open();
+    w.document.write(`<img src="${capturedDataUrl}" style="max-width:100%"/>`);
+    toast('Opened in new tab — right-click to save');
+  }
+}
+function closeImgExport(){
+  document.getElementById('img-export-overlay').classList.remove('show');
+  capturedDataUrl=null;
+}
+document.getElementById('export-img-btn').onclick=openImgExport;
+document.getElementById('img-dl-btn').onclick=downloadImage;
+document.getElementById('img-copy-btn').onclick=copyImageToClipboard;
+document.getElementById('img-export-overlay').addEventListener('mousedown',e=>{
+  if(e.target===document.getElementById('img-export-overlay')) closeImgExport();
+});
+['img-format','img-scale','img-bg'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    if(document.getElementById('img-export-overlay').classList.contains('show')){
+      document.getElementById('img-preview').style.display='none';
+      document.getElementById('img-capture-status').style.display='flex';
+      document.getElementById('img-capture-status').innerHTML='<span class="spinner"></span> Re-rendering…';
+      document.getElementById('img-dl-btn').disabled=true;
+      document.getElementById('img-copy-btn').disabled=true;
+      capturedDataUrl=null;
+      captureCanvas();
+    }
+  });
+});
+
+// ── SEARCH FILTER ──
+document.getElementById('comp-search').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('.comp-item').forEach(item=>{
+    const match=item.querySelector('.comp-name').textContent.toLowerCase().includes(q)||
+                 item.querySelector('.comp-desc').textContent.toLowerCase().includes(q);
+    item.style.display=match?'':'none';
+  });
+  document.querySelectorAll('.comp-group').forEach(g=>{
+    g.style.display=[...g.querySelectorAll('.comp-item')].some(i=>i.style.display!=='none')?'':'none';
+  });
+});
+
+// ── AdminLTE theme toggle ──
+(()=>{
+  const STORAGE_KEY='lte-theme';
+  const getStored=()=>localStorage.getItem(STORAGE_KEY);
+  const setStored=t=>localStorage.setItem(STORAGE_KEY,t);
+  const prefersDark=()=>globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
+  const getPreferred=()=>{const s=getStored();return s||( prefersDark()?'dark':'light');};
+  const setTheme=t=>{
+    const r=t==='auto'?(prefersDark()?'dark':'light'):t;
+    document.documentElement.setAttribute('data-bs-theme',r);
+  };
+  setTheme(getPreferred());
+  const showActive=theme=>{
+    document.querySelectorAll('[data-bs-theme-value]').forEach(el=>{
+      const active=el.getAttribute('data-bs-theme-value')===theme;
+      el.classList.toggle('active',active);
+      el.setAttribute('aria-pressed',active);
+      el.querySelector('.bi-check-lg')?.classList.toggle('d-none',!active);
+    });
+    document.querySelectorAll('[data-lte-theme-icon]').forEach(icon=>{
+      icon.classList.toggle('d-none',icon.dataset.lteThemeIcon!==theme);
+    });
+  };
+  globalThis.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
+    const s=getStored();if(!s||s==='auto')setTheme(getPreferred());
+  });
+  document.addEventListener('DOMContentLoaded',()=>{
+    showActive(getPreferred());
+    document.querySelectorAll('[data-bs-theme-value]').forEach(toggle=>{
+      toggle.addEventListener('click',()=>{
+        const t=toggle.getAttribute('data-bs-theme-value');
+        setStored(t);setTheme(t);showActive(t);
+      });
+    });
+  });
+})();
+
+toast('Welcome to WebCraft! Drag components to build your app.');
+</script>
+
+<!-- OverlayScrollbars init -->
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const sw=document.getElementById('component-list');
+  const isMobile=window.innerWidth<=992;
+  if(sw&&OverlayScrollbarsGlobal?.OverlayScrollbars&&!isMobile){
+    OverlayScrollbarsGlobal.OverlayScrollbars(sw,{
+      scrollbars:{theme:'os-theme-light',autoHide:'leave',clickScroll:true}
+    });
+  }
+});
+</script>
+</body>
+</html>
